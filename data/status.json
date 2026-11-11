@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "collectedAt": null,
+  "collectedAt": "2026-11-11T18:39:05Z",
   "monitoredBranch": "main",
   "repositories": [
     {
       "name": "athmetry-backend",
       "owner": "athmetry",
       "repo": "athmetry-backend",
-      "error": null,
+      "error": "Failed to fetch workflow runs from GitHub API.",
       "latestRun": null,
       "jobs": [],
       "commit": null,
@@ -18,7 +18,7 @@
       "name": "athmetry-frontend",
       "owner": "athmetry",
       "repo": "athmetry-frontend",
-      "error": null,
+      "error": "Failed to fetch workflow runs from GitHub API.",
       "latestRun": null,
       "jobs": [],
       "commit": null,
