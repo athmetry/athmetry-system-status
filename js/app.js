@@ -38,7 +38,7 @@ function getStoredTheme() {
 function setTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   if (themeIcon) {
-    themeIcon.textContent = theme === "dark" ? "\u2600" : "\u263A"; // ☀️ / 🌙
+    themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
   }
   // Use the correct official logo variant for each background.
   // logo.svg   = light variant (white bg rect, dark wordmark) — for light mode
@@ -119,6 +119,70 @@ async function handleManualRefresh() {
   }
 }
 
+
+/* ------------------------------------------------------------------ */
+/* GitHub Actions confirmation dialog                                 */
+/* ------------------------------------------------------------------ */
+
+const viewRunsBtns = document.querySelectorAll('.view-runs-btn');
+const githubActionsDialog = document.getElementById('github-actions-dialog');
+
+if (viewRunsBtns.length > 0 && githubActionsDialog) {
+  // Define the repository-specific GitHub Actions URLs
+  const githubUrls = {
+    backend: 'https://github.com/athmetry/athmetry-backend/actions',
+    frontend: 'https://github.com/athmetry/athmetry-frontend/actions'
+  };
+
+  // Open the dialog for the selected repository
+  function openGitHubActionsDialog(repo) {
+    const url = githubUrls[repo] || '#';
+    const continueBtn = dialog.querySelector('.dialog-continue');
+    if (continueBtn) {
+      continueBtn.href = url;
+    }
+    githubActionsDialog.showModal();
+  }
+
+  // Close the dialog
+  function closeGitHubActionsDialog() {
+    githubActionsDialog.close();
+  }
+
+  // Event listeners for View runs buttons
+  viewRunsBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const repoRow = btn.closest('.repo-health-row');
+      const repoId = repoRow.getAttribute('id').replace('repo-row-', '');
+      openGitHubActionsDialog(repoId);
+    });
+  });
+
+  // Close dialog buttons
+  const dialogCancelBtns = dialog.querySelectorAll('.dialog-cancel');
+  dialogCancelBtns.forEach(btn => {
+    btn.addEventListener('click', closeGitHubActionsDialog);
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && githubActionsDialog.open) {
+      closeGitHubActionsDialog();
+    }
+  });
+
+  // Close on background click
+  githubActionsDialog.addEventListener('click', (e) => {
+    if (e.target === githubActionsDialog) {
+      closeGitHubActionsDialog();
+    }
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Visitor IP & approximate location                                  */
+/* ------------------------------------------------------------------ */
+
 function initRefreshButton() {
   if (!refreshBtn) return;
   refreshBtn.addEventListener("click", handleManualRefresh);
@@ -170,6 +234,21 @@ async function fetchVisitorInfo() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Repo health initialization                                           */
+/* ------------------------------------------------------------------ */
+
+function initRepoHealth() {
+  const repoRows = document.querySelectorAll('.repo-health-row');
+
+  repoRows.forEach((row) => {
+    row.addEventListener('click', () => {
+      const isExpanded = row.getAttribute('aria-expanded') === 'true';
+      row.setAttribute('aria-expanded', !isExpanded.toString());
+    });
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Boot                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -194,6 +273,9 @@ function init() {
 
   // Visitor IP lookup (non-blocking, fire and forget).
   fetchVisitorInfo();
+
+  // Initialize repo health expand/collapse
+  initRepoHealth();
 
   // Clean up timer on page unload.
   window.addEventListener("beforeunload", () => {

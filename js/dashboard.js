@@ -203,69 +203,48 @@ function renderRepoCard(repo) {
   }
   if (!card) return;
 
-  const statusPill = card.querySelector(".status-pill");
-  const commitInfo = card.querySelector(".commit-info");
-  const jobsSection = card.querySelector(".jobs");
-  const errorEl = card.querySelector(".error");
-
   const run = repo.latestRun;
   const status = (run && run.status) || "unknown";
 
-  // Status pill
-  if (statusPill) {
-    statusPill.className = `status-pill ${statusClass(status)}`;
-    const textEl = statusPill.querySelector("span:last-child");
-    if (textEl) textEl.textContent = capitalize(status);
-  }
+  // Status pill for the compact health row
+  const healthStatusDot = document.querySelector(`.status-dot.status-${status}-dot`);
+  const healthStatusText = document.querySelector(`.status-${status}-text`);
+  if (healthStatusDot) healthStatusDot.className = `status-dot ${statusClass(status)}-dot`;
+  if (healthStatusText) healthStatusText.textContent = capitalize(status);
 
   // Commit info
-  if (commitInfo && run) {
-    commitInfo.style.display = "block";
-    const shaEl = card.querySelector("#commit-" + repo.name + "-sha");
-    const msgEl = card.querySelector("#commit-" + repo.name + "-message");
-    const authorEl = card.querySelector("#commit-" + repo.name + "-author");
-    const execEl = card.querySelector("#exec-" + repo.name);
+  if (run) {
+    const shaEl = document.querySelector(`#commit-${repo.name}-sha`);
+    const msgEl = document.querySelector(`#commit-${repo.name}-message`);
+    const authorEl = document.querySelector(`#commit-${repo.name}-author`);
+    const execEl = document.querySelector(`#exec-${repo.name}`);
+    const workflowEl = document.querySelector(`.workflow-name`);
+    const runNumEl = document.querySelector(`.run-number`);
+    const startEl = document.querySelector(`.started-at`);
+    const completeEl = document.querySelector(`.completed-at`);
+    const durationEl = document.querySelector(`.duration`);
+    const outcomeEl = document.querySelector(`.workflow-outcome`);
+    const runLinkEl = document.querySelector(`.run-link-detail`);
+
     if (shaEl) shaEl.textContent = run.commitSha ? run.commitSha.substring(0, 7) : "—";
     if (msgEl) msgEl.textContent = escapeHtml(run.commitMessage || "—");
     if (authorEl) authorEl.textContent = escapeHtml(run.commitAuthor || "—");
-    if (execEl) {
-      execEl.innerHTML = `${formatTimestamp(run.startedAt)} — ${formatTimestamp(
-        run.completedAt
-      )} (${formatDuration(run.startedAt, run.completedAt)})`;
-    }
-  } else if (commitInfo) {
-    commitInfo.style.display = "none";
-  }
+    if (workflowEl) workflowEl.textContent = run.workflowName || "—";
+    if (runNumEl) runNumEl.textContent = run.runNumber || "—";
+    if (startEl) startEl.textContent = formatTimestamp(run.startedAt);
+    if (completeEl) completeEl.textContent = formatTimestamp(run.completedAt);
+    if (durationEl) durationEl.textContent = formatDuration(run.startedAt, run.completedAt);
+    if (outcomeEl) outcomeEl.textContent = run.conclusion || "—";
+    if (runLinkEl) runLinkEl.href = run.runUrl || "#";
 
-  // Jobs
-  if (jobsSection) {
-    const jobList = card.querySelector("#job-list-" + repo.name);
-    if (run && run.jobs && run.jobs.length > 0) {
-      jobsSection.style.display = "block";
-      jobList.innerHTML = run.jobs
-        .map(
-          (job) => `
-          <li class="job-item">
-            <span class="job-name">${escapeHtml(job.name || "Unnamed job")}</span>
-            <span class="job-status ${jobStatusClass(job.status)}">
-              ${capitalize(job.status || "unknown")}
-            </span>
-          </li>
-        `
-        )
-        .join("");
-    } else {
-      jobsSection.style.display = "none";
-    }
-  }
-
-  // Error
-  if (errorEl) {
-    if (repo.error) {
-      errorEl.style.display = "block";
-      errorEl.textContent = escapeHtml(repo.error);
-    } else {
-      errorEl.style.display = "none";
+    // Show the compact health row indicators
+    const healthRow = document.querySelector(`#repo-row-${repo.name}`);
+    if (healthRow) {
+      healthRow.setAttribute("aria-expanded", "true");
+      const statusDot = healthRow.querySelector(".status-dot");
+      const statusText = healthRow.querySelector(".status-text");
+      if (statusDot) statusDot.className = `status-dot ${statusClass(status)}-dot`;
+      if (statusText) statusText.textContent = capitalize(status);
     }
   }
 
@@ -360,6 +339,18 @@ export async function renderDashboard() {
     }
   }
 
+  // Last collected at
+  if (EL.lastUpdated) {
+    const collectedAt = data.collectedAt || data.lastCollectedAt;
+    if (collectedAt) {
+      // Show in meta row - but we'll use a different approach
+      const lastCollectedEl = document.querySelector('.last-collected-at');
+      if (lastCollectedEl) {
+        lastCollectedEl.textContent = formatTimestamp(collectedAt);
+      }
+    }
+  }
+
   // Render each repo card
   repos.forEach((repo) => {
     renderRepoCard(repo);
@@ -373,17 +364,6 @@ export async function renderDashboard() {
 
   // Alerts
   renderAlerts(data);
-
-  // Tab switch handlers
-  EL.tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      EL.tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      const repo = tab.getAttribute("data-repo");
-      const repoData = repos.find((r) => r.name === repo);
-      renderHistory(repo, repoData ? repoData.history : []);
-    });
-  });
 }
 
 function overallDetailMessage(overall, repos) {
@@ -444,4 +424,30 @@ function renderAlerts(data) {
   } else {
     EL.alertCard.style.display = "none";
   }
+}
+
+/**
+ * Initialize repo health rows and expand/collapse details.
+ */
+function initRepoHealth() {
+  const repoRows = document.querySelectorAll('.repo-health-row');
+
+  repoRows.forEach((row) => {
+    row.addEventListener('click', () => {
+      const isExpanded = row.getAttribute('aria-expanded') === 'true';
+      row.setAttribute('aria-expanded', !isExpanded.toString());
+      
+      const detailsId = row.getAttribute('data-details-id');
+      if (detailsId) {
+        const detailsEl = document.getElementById(detailsId);
+        if (detailsEl) {
+          if (isExpanded) {
+            detailsEl.style.display = 'none';
+          } else {
+            detailsEl.style.display = 'block';
+          }
+        }
+      }
+    });
+  });
 }

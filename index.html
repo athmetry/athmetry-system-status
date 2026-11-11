@@ -16,10 +16,17 @@
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <img src="assets/brand/logo.svg" alt="Athmetry" class="logo" />
+      <!-- Standalone Athmetry A symbol -->
+      <div class="header-symbol" aria-label="Athmetry">
+        <svg width="28" height="28" viewBox="0 0 32 32" role="img">
+          <path d="M10 28l 12-23 12 23-12 23-12-23Z"
+                fill="none" stroke="#B4FF39" stroke-width="4" stroke-linecap="round"/>
+          <path d="M14 13l 10 12L 24 13Z"
+                fill="none" stroke="#B4FF39" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div class="branding">
         <h1>Athmetry System Status</h1>
-        <p class="subtitle">Engineering health monitoring for Athmetry development pipeline</p>
       </div>
       <div class="header-actions">
         <button id="theme-toggle" class="theme-toggle" aria-label="Switch theme" title="Switch theme">
@@ -49,78 +56,56 @@
       <div class="meta-row">
         <span><strong>Monitored branch:</strong> <span id="monitored-branch">main</span></span>
         <span id="last-successful-build">&mdash;</span>
+        <span id="last-collected-at" class="last-collected-at">&mdash;</span>
       </div>
     </section>
 
-    <!-- Repository status cards -->
+    <!-- Repository and branch health -->
     <section class="repo-section">
-      <h2>Repository Pipeline Health</h2>
-      <div class="repo-grid" id="repo-grid">
-        <!-- Backend card -->
-        <article class="repo-card" id="card-athmetry-backend">
-          <header class="repo-card-header">
-            <div class="repo-ident">
-              <span class="repo-name">athmetry-backend</span>
-              <span class="repo-owner">athmetry / athmetry-backend</span>
-            </div>
-            <div class="repo-actions">
-              <a href="#" class="btn-link" id="link-backend-runs" target="_blank" rel="noopener">View runs</a>
-            </div>
-          </header>
-          <div class="repo-card-body">
-            <div class="status-row">
-              <div class="status-pill status-unknown" id="status-backend">
-                <span class="dot"></span>
-                <span id="status-backend-text">Unknown</span>
-              </div>
-            </div>
-            <div class="commit-info" id="commit-athmetry-backend" style="display:none;">
-              <p><strong>Latest commit:</strong> <span id="commit-athmetry-backend-sha"></span></p>
-              <p><strong>Message:</strong> <span id="commit-athmetry-backend-message"></span></p>
-              <p><strong>Author:</strong> <span id="commit-athmetry-backend-author"></span></p>
-              <p><strong>Execution:</strong> <span id="exec-athmetry-backend"></span></p>
-            </div>
-            <div class="jobs" id="jobs-athmetry-backend" style="display:none;">
-              <h3>Jobs</h3>
-              <ul class="job-list" id="job-list-athmetry-backend"></ul>
-            </div>
-            <div class="error" id="error-backend" style="display:none;"></div>
+      <h2>Pipeline Health</h2>
+      <div class="repo-health">
+        <!-- Backend repo health row -->
+        <div class="repo-health-row" id="repo-row-backend" role="button" tabindex="0" aria-label="Backend pipeline health">
+          <div class="repo-health-info">
+            <span class="repo-health-name">Backend</span>
+            <span class="repo-health-branch">main</span>
           </div>
-        </article>
-
-        <!-- Frontend card -->
-        <article class="repo-card" id="card-athmetry-frontend">
-          <header class="repo-card-header">
-            <div class="repo-ident">
-              <span class="repo-name">athmetry-frontend</span>
-              <span class="repo-owner">athmetry / athmetry-frontend</span>
-            </div>
-            <div class="repo-actions">
-              <a href="#" class="btn-link" id="link-frontend-runs" target="_blank" rel="noopener">View runs</a>
-            </div>
-          </header>
-          <div class="repo-card-body">
-            <div class="status-row">
-              <div class="status-pill status-unknown" id="status-frontend">
-                <span class="dot"></span>
-                <span id="status-frontend-text">Unknown</span>
-              </div>
-            </div>
-            <div class="commit-info" id="commit-athmetry-frontend" style="display:none;">
-              <p><strong>Latest commit:</strong> <span id="commit-athmetry-frontend-sha"></span></p>
-              <p><strong>Message:</strong> <span id="commit-athmetry-frontend-message"></span></p>
-              <p><strong>Author:</strong> <span id="commit-athmetry-frontend-author"></span></p>
-              <p><strong>Execution:</strong> <span id="exec-athmetry-frontend"></span></p>
-            </div>
-            <div class="jobs" id="jobs-athmetry-frontend" style="display:none;">
-              <h3>Jobs</h3>
-              <ul class="job-list" id="job-list-athmetry-frontend"></ul>
-            </div>
-            <div class="error" id="error-frontend" style="display:none;"></div>
+          <div class="repo-health-status" aria-hidden="true">
+            <span class="status-dot status-unknown-dot"></span>
+            <span class="status-text status-unknown-text">Unknown</span>
           </div>
-        </article>
+          <div class="repo-health-actions">
+            <button class="view-runs-btn" aria-label="View backend runs">View runs</button>
+          </div>
+        </div>
+        <!-- Frontend repo health row -->
+        <div class="repo-health-row" id="repo-row-frontend" role="button" tabindex="0" aria-label="Frontend pipeline health">
+          <div class="repo-health-info">
+            <span class="repo-health-name">Frontend</span>
+            <span class="repo-health-branch">main</span>
+          </div>
+          <div class="repo-health-status" aria-hidden="true">
+            <span class="status-dot status-unknown-dot"></span>
+            <span class="status-text status-unknown-text">Unknown</span>
+          </div>
+          <div class="repo-health-actions">
+            <button class="view-runs-btn" aria-label="View frontend runs">View runs</button>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- Confirmation dialog: Open GitHub Actions? -->
+    <dialog id="github-actions-dialog" class="github-actions-dialog" aria-modal="true" role="dialog" aria-labelledby="dialog-title">
+      <div class="dialog-content">
+        <h2 id="dialog-title">Open GitHub Actions?</h2>
+        <p>You are about to leave Athmetry System Status and open GitHub Actions to view the complete workflow execution history and logs.</p>
+        <div class="dialog-actions">
+          <button class="dialog-btn dialog-cancel" aria-label="Stay here">Stay here</button>
+          <a href="#" class="dialog-btn dialog-continue" target="_blank" rel="noopener noreferrer">Continue to GitHub</a>
+        </div>
+      </div>
+    </dialog>
 
     <!-- Execution history -->
     <section class="card history-card">
@@ -155,60 +140,45 @@
 
   <footer class="site-footer">
     <div class="footer-content">
-      <div class="footer-brand">
-        <div class="footer-flag" aria-label="India">
-          <svg width="48" height="32" viewBox="0 0 48 32" role="img" aria-label="India">
-            <rect width="48" height="10.67" fill="#FF9933" />
-            <rect y="10.67" width="48" height="10.67" fill="#FFFFFF" />
-            <rect y="21.33" width="48" height="10.67" fill="#138808" />
-            <circle cx="24" cy="16" r="3.5" fill="none" stroke="#000080" stroke-width="0.6" />
-            <circle cx="24" cy="16" r="0.9" fill="#000080" />
-            <g stroke="#000080" stroke-width="0.45" fill="none">
-              <line x1="25.0" y1="16.0" x2="27.5" y2="16.0" />
-              <line x1="25.0" y1="15.7" x2="27.4" y2="15.1" />
-              <line x1="24.9" y1="15.5" x2="27.0" y2="14.3" />
-              <line x1="24.7" y1="15.3" x2="26.5" y2="13.5" />
-              <line x1="24.5" y1="15.1" x2="25.8" y2="13.0" />
-              <line x1="24.3" y1="15.0" x2="24.9" y2="12.6" />
-              <line x1="24.0" y1="15.0" x2="24.0" y2="12.5" />
-              <line x1="23.7" y1="15.0" x2="23.1" y2="12.6" />
-              <line x1="23.5" y1="15.1" x2="22.3" y2="13.0" />
-              <line x1="23.3" y1="15.3" x2="21.5" y2="13.5" />
-              <line x1="23.1" y1="15.5" x2="21.0" y2="14.3" />
-              <line x1="23.0" y1="15.7" x2="20.6" y2="15.1" />
-              <line x1="23.0" y1="16.0" x2="20.5" y2="16.0" />
-              <line x1="23.0" y1="16.3" x2="20.6" y2="16.9" />
-              <line x1="23.1" y1="16.5" x2="21.0" y2="17.8" />
-              <line x1="23.3" y1="16.7" x2="21.5" y2="18.5" />
-              <line x1="23.5" y1="16.9" x2="22.3" y2="19.0" />
-              <line x1="23.7" y1="17.0" x2="23.1" y2="19.4" />
-              <line x1="24.0" y1="17.0" x2="24.0" y2="19.5" />
-              <line x1="24.3" y1="17.0" x2="24.9" y2="19.4" />
-              <line x1="24.5" y1="16.9" x2="25.8" y2="19.0" />
-              <line x1="24.7" y1="16.7" x2="26.5" y2="18.5" />
-              <line x1="24.9" y1="16.5" x2="27.0" y2="17.8" />
-              <line x1="25.0" y1="16.3" x2="27.4" y2="16.9" />
-            </g>
-          </svg>
-        </div>
-        <div class="footer-company">
-          <div class="footer-company-name">Athmetry Private Limited</div>
-          <div class="footer-company-location">Bengaluru, India</div>
-        </div>
+      <!-- Company identity block -->
+      <div class="footer-identity">
+        <!-- Official Athmetry logo -->
+        <svg width="24" height="16" viewBox="0 0 1500 400" role="img" aria-label="Athmetry">
+          <rect width="1500" height="400" fill="url(#athmetry-gradient)"/>
+          <defs>
+            <linearGradient id="athmetry-gradient" gradientUnits="userSpaceOnUse" x1="42" y1="40" x2="300" y2="284">
+              <stop offset="0%" stop-color="#B4FF39"/>
+              <stop offset="52%" stop-color="#00E5C3"/>
+              <stop offset="100%" stop-color="#0095FF"/>
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke="url(#athmetry-gradient)" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M42 284 L151 55 Q160 36 172 55 L218 130"/>
+            <path d="M137 190 L184 284"/>
+            <path d="M247 184 L300 284"/>
+          </g>
+          <g transform="translate(500 115) scale(.92)"><text x="0" y="128" fill="#080B12"
+                font-family="Montserrat, Avenir Next, Arial, sans-serif"
+                font-size="108" font-weight="500" letter-spacing="18">ATHMETRY</text></g>
+        </svg>
+        <span style="font-weight:700; color:var(--text-primary); margin-left:8px;">Athmetry Private Limited</span>
       </div>
-      <div class="footer-links">
-        <a href="https://athmetry.com" target="_blank" rel="noopener noreferrer" class="footer-link">Athmetry Products ↗</a>
+      <div class="footer-address">
+        Bengaluru, <span class="flag-india">India</span>
       </div>
-      <div class="footer-visitor" id="footer-visitor">
-        <div id="visitor-ip">Visitor IP: Unavailable</div>
-        <div id="visitor-location">Approx. Location: Unavailable</div>
+      <div class="footer-link">
+        <a href="https://athmetry.com" target="_blank" rel="noopener noreferrer" class="footer-link">Athmetry</a>
       </div>
-      <div class="footer-note" id="footer-note">
-        <p>Visitor IP and approximate location are obtained through an external IP lookup service (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate and can be affected by VPNs and network routing.</p>
-      </div>
-      <div class="footer-copyright">
-        &copy; 2026 Athmetry Private Limited
-      </div>
+    </div>
+    <div class="footer-connection" id="footer-connection">
+      <div id="visitor-ip">Visitor IP: Unavailable</div>
+      <div id="visitor-location">Approx. Location: Unavailable</div>
+    </div>
+    <div class="footer-note" id="footer-note">
+      <p>Visitor IP and approximate location are obtained through an external IP lookup service (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate and can be affected by VPNs and network routing.</p>
+    </div>
+    <div class="footer-copyright">
+      &copy; 2026 Athmetry Private Limited
     </div>
   </footer>
 
