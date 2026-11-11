@@ -83,13 +83,10 @@ collect_repo() {
 
   # Fetch the latest workflow runs for the monitored branch.
   # per_page=10 gives us both the latest run and a short history.
+  # Use query parameters in the URL (gh api -f flags substitute path placeholders,
+  # not query parameters; the GitHub Actions runs endpoint requires ?branch=&per_page=).
   local runs_payload
-  if ! runs_payload=$(gh_api \
-    "/repos/${owner}/${repo}/actions/runs" \
-    -f branch="$BRANCH" \
-    -f per_page=10 \
-    -f status= \
-    --jq '.' 2>/dev/null); then
+  if ! runs_payload=$(gh_api "/repos/${owner}/${repo}/actions/runs?branch=${BRANCH}&per_page=10" --jq '.' 2>/dev/null); then
     error="Failed to fetch workflow runs from GitHub API."
   fi
 
@@ -106,13 +103,13 @@ collect_repo() {
       latest=$(printf '%s' "$runs_array" | jq -c '.[0]')
 
       local head_sha run_id run_number status conclusion html_url started_at completed_at
-      head_sha=$(printf '%s' "$latest" | jq -r '.head_sha // ""')
-      run_id=$(printf '%s' "$latest" | jq -r '.id // ""')
-      run_number=$(printf '%s' "$latest" | jq -r '.run_number // ""')
-      status=$(printf '%s' "$latest" | jq -r '.status // "unknown"')
-      conclusion=$(printf '%s' "$latest" | jq -r '.conclusion // "unknown"')
-      html_url=$(printf '%s' "$latest" | jq -r '.html_url // ""')
-      started_at=$(printf '%s' "$latest" | jq -r '.run_started_at // .created_at // ""')
+      head_sha=$(printf '%s' "$latest" | jq -r 'if .head_sha != null then .head_sha else "" end')
+      run_id=$(printf '%s' "$latest" | jq -r 'if .id != null then .id else "" end')
+      run_number=$(printf '%s' "$latest" | jq -r 'if .run_number != null then .run_number else "" end')
+      status=$(printf '%s' "$latest" | jq -r 'if .status != null then .status else "unknown" end')
+      conclusion=$(printf '%s' "$latest" | jq -r 'if .conclusion != null then .conclusion else "unknown" end')
+      html_url=$(printf '%s' "$latest" | jq -r 'if .html_url != null then .html_url else "" end')
+      started_at=$(printf '%s' "$latest" | jq -r 'if .run_started_at != null then .run_started_at else .created_at end')
       completed_at=$(printf '%s' "$latest" | jq -r '.updated_at // ""')
 
       # Fetch job-level details for the latest run.
@@ -136,8 +133,8 @@ collect_repo() {
         if commit_payload=$(gh_api \
           "/repos/${owner}/${repo}/commits/${head_sha}" \
           --jq '.' 2>/dev/null) && [[ -n "${commit_payload:-}" ]]; then
-          commit_message=$(printf '%s' "$commit_payload" | jq -r '.commit.message // ""' | head -n 1)
-          commit_author=$(printf '%s' "$commit_payload" | jq -r '.commit.author.name // .author.login // ""')
+          commit_message=$(printf '%s' "$commit_payload" | jq -r 'if .commit.message != null then .commit.message else "" end' | head -n 1)
+          commit_author=$(printf '%s' "$commit_payload" | jq -r 'if .commit.author.name != null then .commit.author.name else .author.login end')
         fi
       fi
 
@@ -171,11 +168,11 @@ collect_repo() {
       # Build history array (all fetched runs, newest first).
       history=$(printf '%s' "$runs_array" | jq -c '
         [.[] | {
-          runNumber: (.run_number | tonumber? // 0),
+          runNumber: (if .run_number != null then (.run_number | tonumber) else 0 end),
           status: .status,
           conclusion: .conclusion,
           commitSha: .head_sha,
-          startedAt: .run_started_at // .created_at,
+          startedAt: (if .run_started_at != null then .run_started_at else .created_at end),
           completedAt: .updated_at,
           runUrl: .html_url
         }]')
