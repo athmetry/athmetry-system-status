@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "collectedAt": null,
+  "monitoredBranch": "main",
+  "repositories": [
+    {
+      "name": "athmetry-backend",
+      "owner": "athmetry",
+      "repo": "athmetry-backend",
+      "error": null,
+      "latestRun": null,
+      "jobs": [],
+      "commit": null,
+      "execution": null,
+      "history": []
+    },
+    {
+      "name": "athmetry-frontend",
+      "owner": "athmetry",
+      "repo": "athmetry-frontend",
+      "error": null,
+      "latestRun": null,
+      "jobs": [],
+      "commit": null,
+      "execution": null,
+      "history": []
+    }
+  ],
+  "notes": "Populated by the collect-status GitHub Actions workflow. Do not edit by hand."
+}

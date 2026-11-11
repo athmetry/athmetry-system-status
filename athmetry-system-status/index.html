@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Athmetry System Status — engineering health monitoring for the Athmetry backend and frontend development pipelines."
+  />
+  <title>Athmetry System Status</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="assets/brand/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="assets/brand/icon-16.png" sizes="16x16" type="image/png" />
+  <link rel="icon" href="assets/brand/icon-32.png" sizes="32x32" type="image/png" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <img src="assets/brand/logo.svg" alt="Athmetry" class="logo" />
+      <div class="branding">
+        <h1>Athmetry System Status</h1>
+        <p class="subtitle">Engineering health monitoring for Athmetry development pipeline</p>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Switch theme" title="Switch theme">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <button id="refresh-btn" class="refresh-btn" aria-label="Refresh status" title="Refresh status">
+          <span class="refresh-icon">↻</span>
+          <span class="refresh-label">Refresh</span>
+        </button>
+        <span id="refresh-status" class="refresh-status"></span>
+        <span id="last-updated" class="last-updated">Last updated: &mdash;</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Overall system status -->
+    <section class="card overall-card">
+      <h2>Overall System Status</h2>
+      <div class="status-row" id="overall-status-row">
+        <div class="status-pill status-unknown" id="overall-status-pill">
+          <span class="dot"></span>
+          <span id="overall-status-text">Unknown</span>
+        </div>
+        <p id="overall-detail">No data collected yet.</p>
+      </div>
+      <div class="meta-row">
+        <span><strong>Monitored branch:</strong> <span id="monitored-branch">main</span></span>
+        <span id="last-successful-build">&mdash;</span>
+      </div>
+    </section>
+
+    <!-- Repository status cards -->
+    <section class="repo-section">
+      <h2>Repository Pipeline Health</h2>
+      <div class="repo-grid" id="repo-grid">
+        <!-- Backend card -->
+        <article class="repo-card" id="card-athmetry-backend">
+          <header class="repo-card-header">
+            <div class="repo-ident">
+              <span class="repo-name">athmetry-backend</span>
+              <span class="repo-owner">athmetry / athmetry-backend</span>
+            </div>
+            <div class="repo-actions">
+              <a href="#" class="btn-link" id="link-backend-runs" target="_blank" rel="noopener">View runs</a>
+            </div>
+          </header>
+          <div class="repo-card-body">
+            <div class="status-row">
+              <div class="status-pill status-unknown" id="status-backend">
+                <span class="dot"></span>
+                <span id="status-backend-text">Unknown</span>
+              </div>
+            </div>
+            <div class="commit-info" id="commit-athmetry-backend" style="display:none;">
+              <p><strong>Latest commit:</strong> <span id="commit-athmetry-backend-sha"></span></p>
+              <p><strong>Message:</strong> <span id="commit-athmetry-backend-message"></span></p>
+              <p><strong>Author:</strong> <span id="commit-athmetry-backend-author"></span></p>
+              <p><strong>Execution:</strong> <span id="exec-athmetry-backend"></span></p>
+            </div>
+            <div class="jobs" id="jobs-athmetry-backend" style="display:none;">
+              <h3>Jobs</h3>
+              <ul class="job-list" id="job-list-athmetry-backend"></ul>
+            </div>
+            <div class="error" id="error-backend" style="display:none;"></div>
+          </div>
+        </article>
+
+        <!-- Frontend card -->
+        <article class="repo-card" id="card-athmetry-frontend">
+          <header class="repo-card-header">
+            <div class="repo-ident">
+              <span class="repo-name">athmetry-frontend</span>
+              <span class="repo-owner">athmetry / athmetry-frontend</span>
+            </div>
+            <div class="repo-actions">
+              <a href="#" class="btn-link" id="link-frontend-runs" target="_blank" rel="noopener">View runs</a>
+            </div>
+          </header>
+          <div class="repo-card-body">
+            <div class="status-row">
+              <div class="status-pill status-unknown" id="status-frontend">
+                <span class="dot"></span>
+                <span id="status-frontend-text">Unknown</span>
+              </div>
+            </div>
+            <div class="commit-info" id="commit-athmetry-frontend" style="display:none;">
+              <p><strong>Latest commit:</strong> <span id="commit-athmetry-frontend-sha"></span></p>
+              <p><strong>Message:</strong> <span id="commit-athmetry-frontend-message"></span></p>
+              <p><strong>Author:</strong> <span id="commit-athmetry-frontend-author"></span></p>
+              <p><strong>Execution:</strong> <span id="exec-athmetry-frontend"></span></p>
+            </div>
+            <div class="jobs" id="jobs-athmetry-frontend" style="display:none;">
+              <h3>Jobs</h3>
+              <ul class="job-list" id="job-list-athmetry-frontend"></ul>
+            </div>
+            <div class="error" id="error-frontend" style="display:none;"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Execution history -->
+    <section class="card history-card">
+      <h2>Recent Execution History</h2>
+      <div class="history-tabs">
+        <button class="tab active" data-repo="athmetry-backend">Backend</button>
+        <button class="tab" data-repo="athmetry-frontend">Frontend</button>
+      </div>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Run</th>
+              <th>Commit</th>
+              <th>Outcome</th>
+              <th>Timestamp</th>
+              <th>Duration</th>
+              <th>Log URL</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Alerts -->
+    <section class="card alert-card" id="alert-card" style="display:none;">
+      <h2>Status Alerts</h2>
+      <div id="alert-body"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <div class="footer-flag" aria-label="India">
+          <svg width="48" height="32" viewBox="0 0 48 32" role="img" aria-label="India">
+            <rect width="48" height="10.67" fill="#FF9933" />
+            <rect y="10.67" width="48" height="10.67" fill="#FFFFFF" />
+            <rect y="21.33" width="48" height="10.67" fill="#138808" />
+            <circle cx="24" cy="16" r="3.5" fill="none" stroke="#000080" stroke-width="0.6" />
+            <circle cx="24" cy="16" r="0.9" fill="#000080" />
+            <g stroke="#000080" stroke-width="0.45" fill="none">
+              <line x1="25.0" y1="16.0" x2="27.5" y2="16.0" />
+              <line x1="25.0" y1="15.7" x2="27.4" y2="15.1" />
+              <line x1="24.9" y1="15.5" x2="27.0" y2="14.3" />
+              <line x1="24.7" y1="15.3" x2="26.5" y2="13.5" />
+              <line x1="24.5" y1="15.1" x2="25.8" y2="13.0" />
+              <line x1="24.3" y1="15.0" x2="24.9" y2="12.6" />
+              <line x1="24.0" y1="15.0" x2="24.0" y2="12.5" />
+              <line x1="23.7" y1="15.0" x2="23.1" y2="12.6" />
+              <line x1="23.5" y1="15.1" x2="22.3" y2="13.0" />
+              <line x1="23.3" y1="15.3" x2="21.5" y2="13.5" />
+              <line x1="23.1" y1="15.5" x2="21.0" y2="14.3" />
+              <line x1="23.0" y1="15.7" x2="20.6" y2="15.1" />
+              <line x1="23.0" y1="16.0" x2="20.5" y2="16.0" />
+              <line x1="23.0" y1="16.3" x2="20.6" y2="16.9" />
+              <line x1="23.1" y1="16.5" x2="21.0" y2="17.8" />
+              <line x1="23.3" y1="16.7" x2="21.5" y2="18.5" />
+              <line x1="23.5" y1="16.9" x2="22.3" y2="19.0" />
+              <line x1="23.7" y1="17.0" x2="23.1" y2="19.4" />
+              <line x1="24.0" y1="17.0" x2="24.0" y2="19.5" />
+              <line x1="24.3" y1="17.0" x2="24.9" y2="19.4" />
+              <line x1="24.5" y1="16.9" x2="25.8" y2="19.0" />
+              <line x1="24.7" y1="16.7" x2="26.5" y2="18.5" />
+              <line x1="24.9" y1="16.5" x2="27.0" y2="17.8" />
+              <line x1="25.0" y1="16.3" x2="27.4" y2="16.9" />
+            </g>
+          </svg>
+        </div>
+        <div class="footer-company">
+          <div class="footer-company-name">Athmetry Private Limited</div>
+          <div class="footer-company-location">Bengaluru, India</div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://athmetry.com" target="_blank" rel="noopener noreferrer" class="footer-link">Athmetry Products ↗</a>
+      </div>
+      <div class="footer-visitor" id="footer-visitor">
+        <div id="visitor-ip">Visitor IP: Unavailable</div>
+        <div id="visitor-location">Approx. Location: Unavailable</div>
+      </div>
+      <div class="footer-note" id="footer-note">
+        <p>Visitor IP and approximate location are obtained through an external IP lookup service (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate and can be affected by VPNs and network routing.</p>
+      </div>
+      <div class="footer-copyright">
+        &copy; 2026 Athmetry Private Limited
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
