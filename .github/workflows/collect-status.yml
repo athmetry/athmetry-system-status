@@ -37,7 +37,7 @@ jobs:
         id: collect
         env:
           # PAT used exclusively for GitHub API reads (backend/frontend repos).
-          GH_TOKEN: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
+          ATHMETRY_GITHUB_TOKEN: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
         run: |
           ./.github/scripts/collect-status.sh
 
