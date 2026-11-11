@@ -43,6 +43,9 @@ jobs:
 
       - name: Commit and push status data
         if: steps.collect.outcome == 'success'
+        env:
+          # Built-in GITHUB_TOKEN used exclusively for Git push (never the PAT).
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet -- data/status.json; then
             echo "No changes to commit."
@@ -50,9 +53,17 @@ jobs:
             COMMIT_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
             git add data/status.json
             git commit -m "chore(status): update pipeline status data ($COMMIT_DATE)"
-            # Use built-in GITHUB_TOKEN for Git push (never the PAT).
+            if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+              echo "ERROR: GITHUB_TOKEN is not set." >&2
+              exit 1
+            fi
             git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-            git push origin HEAD:main
-            # Restore remote URL without embedded token.
-            git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+            if git push origin HEAD:main; then
+              # Restore remote URL without embedded token.
+              git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+            else
+              # Restore remote URL without embedded token even on failure.
+              git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git" 2>/dev/null || true
+              exit 1
+            fi
           fi
