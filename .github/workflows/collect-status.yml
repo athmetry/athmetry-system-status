@@ -1,0 +1,58 @@
+name: Collect System Status
+
+on:
+  schedule:
+    # Run automatically every 5 minutes.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    # Allow manual execution.
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect-status
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Collect pipeline status
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Use the fine-grained PAT so the workflow can commit back to this repo.
+          token: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "athmetry-status-bot"
+          git config user.email "athmetry-status-bot@users.noreply.github.com"
+
+      - name: Collect status data
+        id: collect
+        env:
+          # PAT used exclusively for GitHub API reads (backend/frontend repos).
+          GH_TOKEN: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
+        run: |
+          ./.github/scripts/collect-status.sh
+
+      - name: Commit and push status data
+        if: steps.collect.outcome == 'success'
+        run: |
+          if git diff --quiet -- data/status.json; then
+            echo "No changes to commit."
+          else
+            COMMIT_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+            git add data/status.json
+            git commit -m "chore(status): update pipeline status data ($COMMIT_DATE)"
+            # Use built-in GITHUB_TOKEN for Git push (never the PAT).
+            git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin HEAD:main
+            # Restore remote URL without embedded token.
+            git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          fi

@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependency / build
+node_modules/
+dist/
+build/
+
+# Local environment
+.env
+.env.local
