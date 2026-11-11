@@ -113,7 +113,7 @@ function capitalize(str) {
 
 /**
  * Determine the overall system status from repository data.
- * Priority: failure > in_progress/queued > success > unknown.
+ * Priority: failure > in_progress/queued > completed-success > success > unknown.
  */
 function computeOverallStatus(repos) {
   if (!repos || repos.length === 0) return "unknown";
@@ -129,15 +129,36 @@ function computeOverallStatus(repos) {
       allSuccess = false;
       continue;
     }
-    const status = repo.latestRun && repo.latestRun.status ? repo.latestRun.status : "unknown";
+    const run = repo.latestRun;
+    const status = run && run.status ? run.status : "unknown";
+    const conclusion = run && run.conclusion ? run.conclusion : null;
+
     if (status === "failure") {
       hasFailure = true;
       allSuccess = false;
       anyData = true;
-    } else if (status === "in_progress" || status === "queued") {
+    } else if (status === "in_progress") {
       hasRunning = true;
       allSuccess = false;
       anyData = true;
+    } else if (status === "queued") {
+      hasRunning = true;
+      allSuccess = false;
+      anyData = true;
+    } else if (status === "completed") {
+      // Completed runs: promotion depends on conclusion
+      if (conclusion === "success") {
+        anyData = true;
+        // Stay success unless another repo drags it down
+      } else if (conclusion === "failure" || conclusion === "cancelled" || conclusion === "timed_out") {
+        hasFailure = true;
+        allSuccess = false;
+        anyData = true;
+      } else {
+        // completed with unknown conclusion
+        allSuccess = false;
+        anyData = true;
+      }
     } else if (status === "success") {
       anyData = true;
     } else {
@@ -149,6 +170,7 @@ function computeOverallStatus(repos) {
   if (!anyData) return "unknown";
   if (hasFailure) return "failure";
   if (hasRunning) return "running";
+  // "completed" with all-success conclusions, or pure "success" statuses
   if (allSuccess) return "success";
   return "unknown";
 }
