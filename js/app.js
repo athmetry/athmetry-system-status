@@ -21,10 +21,10 @@ let isRefreshing = false;
 /* ------------------------------------------------------------------ */
 
 const themeToggle = document.getElementById("theme-toggle");
-const themeIcon = document.querySelector(".theme-icon");
 
 function getSystemTheme() {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Default to light mode regardless of system preference
+  return "light";
 }
 
 function getStoredTheme() {
@@ -37,16 +37,16 @@ function getStoredTheme() {
 
 function setTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  if (themeIcon) {
-    themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+
+  // Update theme toggle button icon + aria-label
+  if (themeToggle) {
+    const isDark = theme === "dark";
+    themeToggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
   }
-  // Use the correct official logo variant for each background.
-  // logo.svg   = light variant (white bg rect, dark wordmark) — for light mode
-  // logo-dark.svg = dark variant (dark bg rect, white wordmark) — for dark mode
-  const logoEl = document.querySelector(".logo");
-  if (logoEl) {
-    logoEl.src = theme === "dark" ? "assets/brand/logo-dark.svg" : "assets/brand/logo.svg";
-  }
+
+  // Footer logo variants are handled via CSS [data-theme] selectors
+  // No JS DOM manipulation needed.
+
   try {
     localStorage.setItem(THEME_KEY, theme);
   } catch (e) {
@@ -77,15 +77,23 @@ function initTheme() {
 const refreshBtn = document.getElementById("refresh-btn");
 const refreshStatus = document.getElementById("refresh-status");
 
+const REFRESH_TIMEOUT_MS = 10000; // 10 second timeout
+
 function setRefreshState(loading) {
   isRefreshing = loading;
   if (refreshBtn) {
     refreshBtn.disabled = loading;
     refreshBtn.classList.toggle("refreshing", loading);
+    // Update button label
+    const label = refreshBtn.querySelector('.refresh-label');
+    if (label) {
+      label.textContent = loading ? "Refreshing..." : "Refresh";
+    }
   }
-  if (refreshStatus) {
-    refreshStatus.textContent = "";
-    refreshStatus.className = "refresh-status";
+  if (refreshStatus && loading) {
+    // Only set loading message; success/error messages are set separately after loading ends
+    refreshStatus.textContent = "Checking latest published status...";
+    refreshStatus.className = "refresh-status loading";
   }
 }
 
@@ -93,10 +101,11 @@ function showRefreshMessage(text, kind) {
   if (!refreshStatus) return;
   refreshStatus.textContent = text;
   refreshStatus.className = `refresh-status ${kind}`;
+  // Clear after 4 seconds for better visibility
   setTimeout(() => {
     refreshStatus.textContent = "";
     refreshStatus.className = "refresh-status";
-  }, 3000);
+  }, 4000);
 }
 
 async function handleManualRefresh() {
@@ -104,40 +113,51 @@ async function handleManualRefresh() {
 
   setRefreshState(true);
 
+  // Create a timeout promise
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("Request timed out")), REFRESH_TIMEOUT_MS);
+  });
+
   try {
     // renderDashboard calls statusApi.fetchStatus() which already uses
     // cache-busting (?t=timestamp). This fetches the latest published JSON
-    // without triggering any GitHub Actions collector workflow.
-    await renderDashboard();
-    showRefreshMessage("Refreshed", "success");
+    // from GitHub Pages without triggering any GitHub Actions collector workflow.
+    // The collector runs on its own schedule (every 5 minutes).
+    await Promise.race([renderDashboard(), timeoutPromise]);
+    // Show success message AFTER loading state ends
+    setRefreshState(false);
+    showRefreshMessage("Status updated successfully", "success");
   } catch (err) {
     // Preserve previously displayed data — do not reset the dashboard.
     console.error("Manual refresh failed:", err);
-    showRefreshMessage("Failed", "error");
-  } finally {
+    const isTimeout = err.message === "Request timed out";
+    // Show error message AFTER loading state ends
     setRefreshState(false);
+    showRefreshMessage(
+      isTimeout ? "Refresh timed out. Showing last available data." : "Refresh failed. Showing last available data.",
+      "error"
+    );
   }
 }
-
 
 /* ------------------------------------------------------------------ */
 /* GitHub Actions confirmation dialog                                 */
 /* ------------------------------------------------------------------ */
 
-const viewRunsBtns = document.querySelectorAll('.view-runs-btn');
-const githubActionsDialog = document.getElementById('github-actions-dialog');
+const viewRunsBtns = document.querySelectorAll(".view-runs-btn");
+const githubActionsDialog = document.getElementById("github-actions-dialog");
 
 if (viewRunsBtns.length > 0 && githubActionsDialog) {
   // Define the repository-specific GitHub Actions URLs
   const githubUrls = {
-    backend: 'https://github.com/athmetry/athmetry-backend/actions',
-    frontend: 'https://github.com/athmetry/athmetry-frontend/actions'
+    backend: "https://github.com/athmetry/athmetry-backend/actions",
+    frontend: "https://github.com/athmetry/athmetry-frontend/actions",
   };
 
   // Open the dialog for the selected repository
   function openGitHubActionsDialog(repo) {
-    const url = githubUrls[repo] || '#';
-    const continueBtn = dialog.querySelector('.dialog-continue');
+    const url = githubUrls[repo] || "#";
+    const continueBtn = githubActionsDialog.querySelector(".dialog-continue");
     if (continueBtn) {
       continueBtn.href = url;
     }
@@ -150,42 +170,33 @@ if (viewRunsBtns.length > 0 && githubActionsDialog) {
   }
 
   // Event listeners for View runs buttons
-  viewRunsBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const repoRow = btn.closest('.repo-health-row');
-      const repoId = repoRow.getAttribute('id').replace('repo-row-', '');
+  viewRunsBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const repoCard = btn.closest(".repo-card");
+      const repoId = repoCard.getAttribute("id").replace("repo-row-", "");
       openGitHubActionsDialog(repoId);
     });
   });
 
   // Close dialog buttons
-  const dialogCancelBtns = dialog.querySelectorAll('.dialog-cancel');
-  dialogCancelBtns.forEach(btn => {
-    btn.addEventListener('click', closeGitHubActionsDialog);
+  const dialogCancelBtns = githubActionsDialog.querySelectorAll(".dialog-cancel");
+  dialogCancelBtns.forEach((btn) => {
+    btn.addEventListener("click", closeGitHubActionsDialog);
   });
 
   // Close on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && githubActionsDialog.open) {
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && githubActionsDialog.open) {
       closeGitHubActionsDialog();
     }
   });
 
   // Close on background click
-  githubActionsDialog.addEventListener('click', (e) => {
+  githubActionsDialog.addEventListener("click", (e) => {
     if (e.target === githubActionsDialog) {
       closeGitHubActionsDialog();
     }
   });
-}
-
-/* ------------------------------------------------------------------ */
-/* Visitor IP & approximate location                                  */
-/* ------------------------------------------------------------------ */
-
-function initRefreshButton() {
-  if (!refreshBtn) return;
-  refreshBtn.addEventListener("click", handleManualRefresh);
 }
 
 /* ------------------------------------------------------------------ */
@@ -234,22 +245,7 @@ async function fetchVisitorInfo() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Repo health initialization                                           */
-/* ------------------------------------------------------------------ */
-
-function initRepoHealth() {
-  const repoRows = document.querySelectorAll('.repo-health-row');
-
-  repoRows.forEach((row) => {
-    row.addEventListener('click', () => {
-      const isExpanded = row.getAttribute('aria-expanded') === 'true';
-      row.setAttribute('aria-expanded', !isExpanded.toString());
-    });
-  });
-}
-
-/* ------------------------------------------------------------------ */
-/* Boot                                                               */
+/* Initialisation                                                     */
 /* ------------------------------------------------------------------ */
 
 function init() {
@@ -269,13 +265,12 @@ function init() {
   }, REFRESH_INTERVAL_MS);
 
   // Manual refresh button.
-  initRefreshButton();
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", handleManualRefresh);
+  }
 
   // Visitor IP lookup (non-blocking, fire and forget).
   fetchVisitorInfo();
-
-  // Initialize repo health expand/collapse
-  initRepoHealth();
 
   // Clean up timer on page unload.
   window.addEventListener("beforeunload", () => {

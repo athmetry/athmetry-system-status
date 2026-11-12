@@ -8,51 +8,80 @@
     content="Athmetry System Status — engineering health monitoring for the Athmetry backend and frontend development pipelines."
   />
   <title>Athmetry System Status</title>
+  <script>
+    // Apply the saved theme before first paint to avoid a flash
+    // of the wrong theme. Defaults to light mode.
+    (function () {
+      try {
+        var t = localStorage.getItem("athmetry-theme");
+        if (t !== "light" && t !== "dark") {
+          t = "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        /* localStorage unavailable — default light theme applies */
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="assets/brand/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="assets/brand/athmetry-app-icon.svg" type="image/svg+xml" />
   <link rel="icon" href="assets/brand/icon-16.png" sizes="16x16" type="image/png" />
   <link rel="icon" href="assets/brand/icon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/brand/athmetry-app-icon.svg" />
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <!-- Standalone Athmetry A symbol -->
-      <div class="header-symbol" aria-label="Athmetry">
-        <svg width="28" height="28" viewBox="0 0 32 32" role="img">
-          <path d="M10 28l 12-23 12 23-12 23-12-23Z"
-                fill="none" stroke="#B4FF39" stroke-width="4" stroke-linecap="round"/>
-          <path d="M14 13l 10 12L 24 13Z"
-                fill="none" stroke="#B4FF39" stroke-width="4" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="branding">
-        <h1>Athmetry System Status</h1>
+      <div class="brand">
+        <img
+          class="header-logo header-logo-light"
+          src="assets/brand/athmetry-logo-transparent-light.svg"
+          alt="Athmetry"
+          height="44"
+        />
+        <img
+          class="header-logo header-logo-dark"
+          src="assets/brand/athmetry-logo-transparent-dark.svg"
+          alt="Athmetry"
+          height="44"
+        />
+        <span class="header-descriptor">SYSTEM STATUS</span>
       </div>
       <div class="header-actions">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Switch theme" title="Switch theme">
-          <span class="theme-icon">🌙</span>
+        <button id="theme-toggle" class="icon-btn theme-toggle" aria-label="Switch to dark theme" title="Switch theme">
+          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
         </button>
-        <button id="refresh-btn" class="refresh-btn" aria-label="Refresh status" title="Refresh status">
-          <span class="refresh-icon">↻</span>
+        <button id="refresh-btn" class="btn refresh-btn" aria-label="Refresh status" title="Refresh status">
+          <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+            <path d="M21 3v6h-6"/>
+          </svg>
           <span class="refresh-label">Refresh</span>
         </button>
-        <span id="refresh-status" class="refresh-status"></span>
-        <span id="last-updated" class="last-updated">Last updated: &mdash;</span>
+        <span id="refresh-status" class="refresh-status" role="status" aria-live="polite"></span>
       </div>
+      <span id="last-updated" class="last-updated">Last updated: &mdash;</span>
     </div>
   </header>
 
   <main class="container">
     <!-- Overall system status -->
-    <section class="card overall-card">
-      <h2>Overall System Status</h2>
-      <div class="status-row" id="overall-status-row">
+    <section class="card overall-card" aria-labelledby="overall-heading">
+      <div class="overall-head">
+        <h2 id="overall-heading">Overall System Status</h2>
         <div class="status-pill status-unknown" id="overall-status-pill">
-          <span class="dot"></span>
+          <span class="dot" aria-hidden="true"></span>
           <span id="overall-status-text">Unknown</span>
         </div>
-        <p id="overall-detail">No data collected yet.</p>
       </div>
+      <p id="overall-detail" class="overall-detail">No data collected yet.</p>
       <div class="meta-row">
         <span><strong>Monitored branch:</strong> <span id="monitored-branch">main</span></span>
         <span id="last-successful-build">&mdash;</span>
@@ -61,58 +90,99 @@
     </section>
 
     <!-- Repository and branch health -->
-    <section class="repo-section">
-      <h2>Pipeline Health</h2>
-      <div class="repo-health">
-        <!-- Backend repo health row -->
-        <div class="repo-health-row" id="repo-row-backend" role="button" tabindex="0" aria-label="Backend pipeline health">
-          <div class="repo-health-info">
-            <span class="repo-health-name">Backend</span>
-            <span class="repo-health-branch">main</span>
+    <section class="repo-section" aria-labelledby="pipeline-heading">
+      <h2 id="pipeline-heading">Pipeline Health</h2>
+      <div class="repo-grid">
+        <!-- Backend repo health card -->
+        <article class="card repo-card" id="repo-row-backend" aria-label="Backend pipeline health">
+          <div class="repo-card-head">
+            <div class="repo-title">
+              <span class="repo-health-name">Backend</span>
+              <span class="repo-health-branch">main</span>
+            </div>
+            <div class="status-pill status-unknown repo-status-pill">
+              <span class="dot status-dot" aria-hidden="true"></span>
+              <span class="status-text">Unknown</span>
+            </div>
           </div>
-          <div class="repo-health-status" aria-hidden="true">
-            <span class="status-dot status-unknown-dot"></span>
-            <span class="status-text status-unknown-text">Unknown</span>
+          <dl class="repo-meta">
+            <div class="repo-meta-item">
+              <dt>Latest run</dt>
+              <dd class="repo-run">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Commit</dt>
+              <dd class="repo-commit">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Started</dt>
+              <dd class="repo-started">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Duration</dt>
+              <dd class="repo-duration">&mdash;</dd>
+            </div>
+          </dl>
+          <div class="repo-card-actions">
+            <button class="btn view-runs-btn" type="button">View runs</button>
           </div>
-          <div class="repo-health-actions">
-            <button class="view-runs-btn" aria-label="View backend runs">View runs</button>
+        </article>
+
+        <!-- Frontend repo health card -->
+        <article class="card repo-card" id="repo-row-frontend" aria-label="Frontend pipeline health">
+          <div class="repo-card-head">
+            <div class="repo-title">
+              <span class="repo-health-name">Frontend</span>
+              <span class="repo-health-branch">main</span>
+            </div>
+            <div class="status-pill status-unknown repo-status-pill">
+              <span class="dot status-dot" aria-hidden="true"></span>
+              <span class="status-text">Unknown</span>
+            </div>
           </div>
-        </div>
-        <!-- Frontend repo health row -->
-        <div class="repo-health-row" id="repo-row-frontend" role="button" tabindex="0" aria-label="Frontend pipeline health">
-          <div class="repo-health-info">
-            <span class="repo-health-name">Frontend</span>
-            <span class="repo-health-branch">main</span>
+          <dl class="repo-meta">
+            <div class="repo-meta-item">
+              <dt>Latest run</dt>
+              <dd class="repo-run">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Commit</dt>
+              <dd class="repo-commit">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Started</dt>
+              <dd class="repo-started">&mdash;</dd>
+            </div>
+            <div class="repo-meta-item">
+              <dt>Duration</dt>
+              <dd class="repo-duration">&mdash;</dd>
+            </div>
+          </dl>
+          <div class="repo-card-actions">
+            <button class="btn view-runs-btn" type="button">View runs</button>
           </div>
-          <div class="repo-health-status" aria-hidden="true">
-            <span class="status-dot status-unknown-dot"></span>
-            <span class="status-text status-unknown-text">Unknown</span>
-          </div>
-          <div class="repo-health-actions">
-            <button class="view-runs-btn" aria-label="View frontend runs">View runs</button>
-          </div>
-        </div>
+        </article>
       </div>
     </section>
 
     <!-- Confirmation dialog: Open GitHub Actions? -->
-    <dialog id="github-actions-dialog" class="github-actions-dialog" aria-modal="true" role="dialog" aria-labelledby="dialog-title">
+    <dialog id="github-actions-dialog" class="github-actions-dialog" aria-modal="true" aria-labelledby="dialog-title">
       <div class="dialog-content">
         <h2 id="dialog-title">Open GitHub Actions?</h2>
         <p>You are about to leave Athmetry System Status and open GitHub Actions to view the complete workflow execution history and logs.</p>
         <div class="dialog-actions">
-          <button class="dialog-btn dialog-cancel" aria-label="Stay here">Stay here</button>
-          <a href="#" class="dialog-btn dialog-continue" target="_blank" rel="noopener noreferrer">Continue to GitHub</a>
+          <button class="btn dialog-cancel" type="button">Stay here</button>
+          <a href="#" class="btn btn-primary dialog-continue" target="_blank" rel="noopener noreferrer">Continue to GitHub</a>
         </div>
       </div>
     </dialog>
 
     <!-- Execution history -->
-    <section class="card history-card">
-      <h2>Recent Execution History</h2>
-      <div class="history-tabs">
-        <button class="tab active" data-repo="athmetry-backend">Backend</button>
-        <button class="tab" data-repo="athmetry-frontend">Frontend</button>
+    <section class="card history-card" aria-labelledby="history-heading">
+      <h2 id="history-heading">Recent Execution History</h2>
+      <div class="history-tabs" role="tablist" aria-label="Repository history">
+        <button class="tab active" type="button" role="tab" aria-selected="true" data-repo="athmetry-backend">Backend</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-repo="athmetry-frontend">Frontend</button>
       </div>
       <div class="history-table-wrap">
         <table class="history-table">
@@ -132,53 +202,59 @@
     </section>
 
     <!-- Alerts -->
-    <section class="card alert-card" id="alert-card" style="display:none;">
+    <section class="card alert-card" id="alert-card" style="display:none;" aria-live="polite">
       <h2>Status Alerts</h2>
-      <div id="alert-body"></div>
+      <div id="alert-body" class="alert-body"></div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="footer-content">
-      <!-- Company identity block -->
-      <div class="footer-identity">
-        <!-- Official Athmetry logo -->
-        <svg width="24" height="16" viewBox="0 0 1500 400" role="img" aria-label="Athmetry">
-          <rect width="1500" height="400" fill="url(#athmetry-gradient)"/>
-          <defs>
-            <linearGradient id="athmetry-gradient" gradientUnits="userSpaceOnUse" x1="42" y1="40" x2="300" y2="284">
-              <stop offset="0%" stop-color="#B4FF39"/>
-              <stop offset="52%" stop-color="#00E5C3"/>
-              <stop offset="100%" stop-color="#0095FF"/>
-            </linearGradient>
-          </defs>
-          <g fill="none" stroke="url(#athmetry-gradient)" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M42 284 L151 55 Q160 36 172 55 L218 130"/>
-            <path d="M137 190 L184 284"/>
-            <path d="M247 184 L300 284"/>
-          </g>
-          <g transform="translate(500 115) scale(.92)"><text x="0" y="128" fill="#080B12"
-                font-family="Montserrat, Avenir Next, Arial, sans-serif"
-                font-size="108" font-weight="500" letter-spacing="18">ATHMETRY</text></g>
-        </svg>
-        <span style="font-weight:700; color:var(--text-primary); margin-left:8px;">Athmetry Private Limited</span>
+    <div class="footer-main">
+      <div class="footer-left">
+        <img
+          class="footer-logo footer-logo-light"
+          src="assets/brand/athmetry-logo-transparent-light.svg"
+          alt="Athmetry"
+          height="36"
+        />
+        <img
+          class="footer-logo footer-logo-dark"
+          src="assets/brand/athmetry-logo-transparent-dark.svg"
+          alt="Athmetry"
+          height="36"
+        />
+        <span class="footer-company">Athmetry Private Limited</span>
       </div>
-      <div class="footer-address">
-        Bengaluru, <span class="flag-india">India</span>
+      <div class="footer-center">
+        <span class="footer-flag" aria-hidden="true">
+          <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="20" height="14" rx="2" fill="#FF9933"/>
+            <rect y="4.67" width="20" height="4.66" fill="#FFFFFF"/>
+            <rect y="9.33" width="20" height="4.67" fill="#138808"/>
+            <circle cx="10" cy="7" r="2.5" fill="#000080"/>
+          </svg>
+        </span>
+        <span class="footer-location">Bengaluru, India</span>
       </div>
-      <div class="footer-link">
-        <a href="https://athmetry.com" target="_blank" rel="noopener noreferrer" class="footer-link">Athmetry</a>
+      <a class="footer-link" href="https://athmetry.com" target="_blank" rel="noopener noreferrer">athmetry.com</a>
+    </div>
+    <div class="footer-lower">
+      <div class="footer-copyright">&copy; 2026 Athmetry Private Limited</div>
+      <div class="footer-visitor" id="footer-visitor">
+        <div class="footer-visitor-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>Visitor information</span>
+        </div>
+        <div class="footer-visitor-content" id="footer-connection">
+          <div id="visitor-ip">Visitor IP: Unavailable</div>
+          <div id="visitor-location">Approx. Location: Unavailable</div>
+        </div>
+        <p class="footer-note">
+          Visitor IP and approximate location are obtained through an external IP lookup service
+          (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate
+          and can be affected by VPNs and network routing.
+        </p>
       </div>
-    </div>
-    <div class="footer-connection" id="footer-connection">
-      <div id="visitor-ip">Visitor IP: Unavailable</div>
-      <div id="visitor-location">Approx. Location: Unavailable</div>
-    </div>
-    <div class="footer-note" id="footer-note">
-      <p>Visitor IP and approximate location are obtained through an external IP lookup service (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate and can be affected by VPNs and network routing.</p>
-    </div>
-    <div class="footer-copyright">
-      &copy; 2026 Athmetry Private Limited
     </div>
   </footer>
 

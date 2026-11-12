@@ -6,10 +6,14 @@
 
 import { statusApi } from "./api.js";
 
+// ---------------------------------------------------------------------------
+// CSS class maps
+// ---------------------------------------------------------------------------
+
 const STATUS_CLASS_MAP = {
   success: "status-success",
   failure: "status-failure",
-  in_progress: "status-running",
+  running: "status-running",
   queued: "status-queued",
   cancelled: "status-cancelled",
   skipped: "status-skipped",
@@ -19,12 +23,16 @@ const STATUS_CLASS_MAP = {
 const JOB_STATUS_CLASS_MAP = {
   success: "success",
   failure: "failure",
-  in_progress: "running",
+  running: "running",
   queued: "queued",
   cancelled: "cancelled",
   skipped: "skipped",
   unknown: "unknown",
 };
+
+// ---------------------------------------------------------------------------
+// DOM element cache
+// ---------------------------------------------------------------------------
 
 const EL = {
   lastUpdated: document.getElementById("last-updated"),
@@ -35,10 +43,14 @@ const EL = {
   lastSuccessfulBuild: document.getElementById("last-successful-build"),
   alertCard: document.getElementById("alert-card"),
   alertBody: document.getElementById("alert-body"),
-  repoCards: {},
   historyBody: document.getElementById("history-body"),
   tabs: document.querySelectorAll(".history-tabs .tab"),
+  lastCollectedAt: document.querySelector(".last-collected-at"),
 };
+
+// ---------------------------------------------------------------------------
+// Utility functions
+// ---------------------------------------------------------------------------
 
 /**
  * Escape HTML to prevent XSS when rendering commit messages/authors.
@@ -112,57 +124,78 @@ function capitalize(str) {
 }
 
 /**
+ * Derive the effective display status from GitHub Actions status + conclusion.
+ * GitHub Actions workflow runs have:
+ *   - status: "completed", "in_progress", "queued", "failure", etc.
+ *   - conclusion: "success", "failure", "cancelled", "timed_out", "skipped", "action_required", null
+ *
+ * For display we want:
+ *   - completed + success => "success"
+ *   - completed + failure => "failure"
+ *   - completed + cancelled => "cancelled"
+ *   - completed + timed_out => "failure" (or "timed_out")
+ *   - in_progress => "running"
+ *   - queued => "queued"
+ *   - anything else => "unknown"
+ */
+function deriveEffectiveStatus(run) {
+  if (!run) return "unknown";
+
+  const status = run.status;
+  const conclusion = run.conclusion;
+
+  if (status === "completed") {
+    switch (conclusion) {
+      case "success":
+        return "success";
+      case "failure":
+      case "action_required":
+        return "failure";
+      case "cancelled":
+        return "cancelled";
+      case "timed_out":
+        return "failure"; // treat timeout as failure for overall health
+      case "skipped":
+        return "skipped";
+      default:
+        return "unknown";
+    }
+  }
+
+  if (status === "in_progress") return "running";
+  if (status === "queued") return "queued";
+  if (status === "failure") return "failure"; // direct failure status
+
+  return "unknown";
+}
+
+/**
  * Determine the overall system status from repository data.
- * Priority: failure > in_progress/queued > completed-success > success > unknown.
+ * Priority: failure > running/queued > success > unknown.
  */
 function computeOverallStatus(repos) {
   if (!repos || repos.length === 0) return "unknown";
 
   let hasFailure = false;
   let hasRunning = false;
-  let allSuccess = true;
   let anyData = false;
 
   for (const repo of repos) {
     if (repo.error) {
       anyData = true;
-      allSuccess = false;
+      hasFailure = true;
       continue;
     }
-    const run = repo.latestRun;
-    const status = run && run.status ? run.status : "unknown";
-    const conclusion = run && run.conclusion ? run.conclusion : null;
-
-    if (status === "failure") {
+    const effective = deriveEffectiveStatus(repo.latestRun);
+    if (effective === "failure") {
       hasFailure = true;
-      allSuccess = false;
       anyData = true;
-    } else if (status === "in_progress") {
+    } else if (effective === "running" || effective === "queued") {
       hasRunning = true;
-      allSuccess = false;
       anyData = true;
-    } else if (status === "queued") {
-      hasRunning = true;
-      allSuccess = false;
-      anyData = true;
-    } else if (status === "completed") {
-      // Completed runs: promotion depends on conclusion
-      if (conclusion === "success") {
-        anyData = true;
-        // Stay success unless another repo drags it down
-      } else if (conclusion === "failure" || conclusion === "cancelled" || conclusion === "timed_out") {
-        hasFailure = true;
-        allSuccess = false;
-        anyData = true;
-      } else {
-        // completed with unknown conclusion
-        allSuccess = false;
-        anyData = true;
-      }
-    } else if (status === "success") {
+    } else if (effective === "success") {
       anyData = true;
     } else {
-      allSuccess = false;
       anyData = true;
     }
   }
@@ -170,19 +203,19 @@ function computeOverallStatus(repos) {
   if (!anyData) return "unknown";
   if (hasFailure) return "failure";
   if (hasRunning) return "running";
-  // "completed" with all-success conclusions, or pure "success" statuses
-  if (allSuccess) return "success";
-  return "unknown";
+  return "success";
 }
 
 /**
  * Find the most recent successful build across repos.
+ * Uses effective status = success.
  */
 function findLastSuccessfulBuild(repos) {
   let best = null;
   for (const repo of repos) {
+    const effective = deriveEffectiveStatus(repo.latestRun);
     const run = repo.latestRun;
-    if (run && run.status === "success" && run.completedAt) {
+    if (effective === "success" && run && run.completedAt) {
       if (!best || new Date(run.completedAt) > new Date(best.completedAt)) {
         best = { ...run, repo: repo.name };
       }
@@ -192,69 +225,39 @@ function findLastSuccessfulBuild(repos) {
 }
 
 /**
- * Render a single repository card.
+ * Render a single repository health card.
+ * HTML structure expects:
+ *   - #repo-row-{backend|frontend} .repo-status-pill .status-dot + .status-text
+ *   - .repo-meta .repo-run, .repo-commit, .repo-started, .repo-duration
  */
 function renderRepoCard(repo) {
-  const cardId = `card-${repo.name}`;
-  let card = document.getElementById(cardId);
-  if (!card) {
-    // Card exists in markup already; we just update internals.
-    card = document.getElementById(cardId);
-  }
+  const run = repo.latestRun;
+  const effectiveStatus = deriveEffectiveStatus(run);
+
+  // Normalize repo name to match HTML IDs: athmetry-backend -> repo-row-backend
+  const repoId = repo.name.replace("athmetry-", "");
+  const card = document.querySelector(`#repo-row-${repoId}`);
   if (!card) return;
 
-  const run = repo.latestRun;
-  const status = (run && run.status) || "unknown";
+  // Status pill
+  const pill = card.querySelector(".repo-status-pill");
+  const statusDot = card.querySelector(".repo-status-pill .status-dot");
+  const statusText = card.querySelector(".repo-status-pill .status-text");
+  if (pill) pill.className = `status-pill ${statusClass(effectiveStatus)} repo-status-pill`;
+  if (statusDot) statusDot.className = `dot status-dot ${statusClass(effectiveStatus)}-dot`;
+  if (statusText) statusText.textContent = capitalize(effectiveStatus);
 
-  // Status pill for the compact health row
-  const healthStatusDot = document.querySelector(`.status-dot.status-${status}-dot`);
-  const healthStatusText = document.querySelector(`.status-${status}-text`);
-  if (healthStatusDot) healthStatusDot.className = `status-dot ${statusClass(status)}-dot`;
-  if (healthStatusText) healthStatusText.textContent = capitalize(status);
-
-  // Commit info
+  // Repo meta
   if (run) {
-    const shaEl = document.querySelector(`#commit-${repo.name}-sha`);
-    const msgEl = document.querySelector(`#commit-${repo.name}-message`);
-    const authorEl = document.querySelector(`#commit-${repo.name}-author`);
-    const execEl = document.querySelector(`#exec-${repo.name}`);
-    const workflowEl = document.querySelector(`.workflow-name`);
-    const runNumEl = document.querySelector(`.run-number`);
-    const startEl = document.querySelector(`.started-at`);
-    const completeEl = document.querySelector(`.completed-at`);
-    const durationEl = document.querySelector(`.duration`);
-    const outcomeEl = document.querySelector(`.workflow-outcome`);
-    const runLinkEl = document.querySelector(`.run-link-detail`);
+    const runEl = card.querySelector(".repo-run");
+    const commitEl = card.querySelector(".repo-commit");
+    const startedEl = card.querySelector(".repo-started");
+    const durationEl = card.querySelector(".repo-duration");
 
-    if (shaEl) shaEl.textContent = run.commitSha ? run.commitSha.substring(0, 7) : "—";
-    if (msgEl) msgEl.textContent = escapeHtml(run.commitMessage || "—");
-    if (authorEl) authorEl.textContent = escapeHtml(run.commitAuthor || "—");
-    if (workflowEl) workflowEl.textContent = run.workflowName || "—";
-    if (runNumEl) runNumEl.textContent = run.runNumber || "—";
-    if (startEl) startEl.textContent = formatTimestamp(run.startedAt);
-    if (completeEl) completeEl.textContent = formatTimestamp(run.completedAt);
+    if (runEl) runEl.textContent = run.runNumber ? `#${run.runNumber}` : "—";
+    if (commitEl) commitEl.textContent = run.commitSha ? run.commitSha.substring(0, 7) : "—";
+    if (startedEl) startedEl.textContent = formatTimestamp(run.startedAt);
     if (durationEl) durationEl.textContent = formatDuration(run.startedAt, run.completedAt);
-    if (outcomeEl) outcomeEl.textContent = run.conclusion || "—";
-    if (runLinkEl) runLinkEl.href = run.runUrl || "#";
-
-    // Show the compact health row indicators
-    const healthRow = document.querySelector(`#repo-row-${repo.name}`);
-    if (healthRow) {
-      healthRow.setAttribute("aria-expanded", "true");
-      const statusDot = healthRow.querySelector(".status-dot");
-      const statusText = healthRow.querySelector(".status-text");
-      if (statusDot) statusDot.className = `status-dot ${statusClass(status)}-dot`;
-      if (statusText) statusText.textContent = capitalize(status);
-    }
-  }
-
-  // Run link
-  const runLink = card.querySelector(".btn-link");
-  if (runLink && run && run.runUrl) {
-    runLink.href = run.runUrl;
-    runLink.style.display = "inline-block";
-  } else if (runLink) {
-    runLink.style.display = "none";
   }
 }
 
@@ -268,7 +271,7 @@ function renderHistory(repoName, history) {
   const items = (history || []).slice(0, 10);
   if (items.length === 0) {
     body.innerHTML = `
-      <tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);">No execution history available.</td></tr>
+      <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);">No execution history available.</td></tr>
     `;
     return;
   }
@@ -295,9 +298,38 @@ function renderHistory(repoName, history) {
     .join("");
 }
 
-/**
- * Render the whole dashboard from status data.
- */
+// ---------------------------------------------------------------------------
+// Tab switching (registered once, not on every render)
+// ---------------------------------------------------------------------------
+
+function initHistoryTabs(repos) {
+  const tabs = document.querySelectorAll(".history-tabs .tab");
+  tabs.forEach((tab) => {
+    // Remove any existing listener to avoid duplicates
+    tab.replaceWith(tab.cloneNode(true));
+  });
+
+  // Re-query after clone
+  const freshTabs = document.querySelectorAll(".history-tabs .tab");
+  freshTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      freshTabs.forEach((t) => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+      const repo = tab.getAttribute("data-repo");
+      const repoData = repos.find((r) => r.name === repo);
+      renderHistory(repo, repoData ? repoData.history : []);
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Main render function
+// ---------------------------------------------------------------------------
+
 export async function renderDashboard() {
   let data;
   try {
@@ -339,15 +371,13 @@ export async function renderDashboard() {
     }
   }
 
-  // Last collected at
-  if (EL.lastUpdated) {
+  // Last collected at (in meta row)
+  if (EL.lastCollectedAt) {
     const collectedAt = data.collectedAt || data.lastCollectedAt;
     if (collectedAt) {
-      // Show in meta row - but we'll use a different approach
-      const lastCollectedEl = document.querySelector('.last-collected-at');
-      if (lastCollectedEl) {
-        lastCollectedEl.textContent = formatTimestamp(collectedAt);
-      }
+      EL.lastCollectedAt.textContent = `Collected: ${formatTimestamp(collectedAt)}`;
+    } else {
+      EL.lastCollectedAt.textContent = "Collected: —";
     }
   }
 
@@ -361,6 +391,9 @@ export async function renderDashboard() {
   const activeRepo = activeTab ? activeTab.getAttribute("data-repo") : "athmetry-backend";
   const activeRepoData = repos.find((r) => r.name === activeRepo);
   renderHistory(activeRepo, activeRepoData ? activeRepoData.history : []);
+
+  // Initialize tab handlers once
+  initHistoryTabs(repos);
 
   // Alerts
   renderAlerts(data);
@@ -424,30 +457,4 @@ function renderAlerts(data) {
   } else {
     EL.alertCard.style.display = "none";
   }
-}
-
-/**
- * Initialize repo health rows and expand/collapse details.
- */
-function initRepoHealth() {
-  const repoRows = document.querySelectorAll('.repo-health-row');
-
-  repoRows.forEach((row) => {
-    row.addEventListener('click', () => {
-      const isExpanded = row.getAttribute('aria-expanded') === 'true';
-      row.setAttribute('aria-expanded', !isExpanded.toString());
-      
-      const detailsId = row.getAttribute('data-details-id');
-      if (detailsId) {
-        const detailsEl = document.getElementById(detailsId);
-        if (detailsEl) {
-          if (isExpanded) {
-            detailsEl.style.display = 'none';
-          } else {
-            detailsEl.style.display = 'block';
-          }
-        }
-      }
-    });
-  });
 }
