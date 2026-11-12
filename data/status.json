@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "collectedAt": "2026-11-12T07:38:53Z",
+  "collectedAt": "2026-11-12T16:15:43Z",
   "monitoredBranch": "main",
   "repositories": [
     {
@@ -11,44 +11,89 @@
       "latestRun": {
         "status": "completed",
         "conclusion": "success",
-        "runId": 43114255646,
-        "runNumber": 11,
-        "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43114255646",
-        "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
-        "commitMessage": "feat(auth): implement password recovery and management",
-        "commitAuthor": "mdtausif1",
-        "startedAt": "2026-11-11T22:44:22Z",
-        "completedAt": "2026-11-11T22:49:30Z",
+        "runId": 43208763247,
+        "runNumber": 6,
+        "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208763247",
+        "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+        "commitMessage": "Merge pull request #1 from athmetry/feat/core-apis-frontend-readiness",
+        "commitAuthor": "Md Tausif",
+        "startedAt": "2026-11-12T11:23:37Z",
+        "completedAt": "2026-11-12T11:24:01Z",
         "jobs": [
           {
-            "name": "Analyze (javascript-typescript)",
+            "name": "pnpm audit (high and critical)",
             "status": "completed",
             "conclusion": "success",
-            "started_at": "2026-11-11T22:44:25Z",
-            "completed_at": "2026-11-11T22:49:30Z"
+            "started_at": "2026-11-12T11:23:41Z",
+            "completed_at": "2026-11-12T11:24:01Z"
           }
         ]
       },
       "jobs": [
         {
-          "name": "Analyze (javascript-typescript)",
+          "name": "pnpm audit (high and critical)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-11T22:44:25Z",
-          "completed_at": "2026-11-11T22:49:30Z"
+          "started_at": "2026-11-12T11:23:41Z",
+          "completed_at": "2026-11-12T11:24:01Z"
         }
       ],
       "commit": {
-        "sha": "a75dca316d3235318f832222d66ec222d8b950d3",
-        "message": "feat(auth): implement password recovery and management",
-        "author": "mdtausif1"
+        "sha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+        "message": "Merge pull request #1 from athmetry/feat/core-apis-frontend-readiness",
+        "author": "Md Tausif"
       },
       "execution": {
-        "startedAt": "2026-11-11T22:44:22Z",
-        "completedAt": "2026-11-11T22:49:30Z",
+        "startedAt": "2026-11-12T11:23:37Z",
+        "completedAt": "2026-11-12T11:24:01Z",
         "duration": null
       },
       "history": [
+        {
+          "runNumber": 6,
+          "status": "completed",
+          "conclusion": "success",
+          "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+          "startedAt": "2026-11-12T11:23:37Z",
+          "completedAt": "2026-11-12T11:24:01Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208763247"
+        },
+        {
+          "runNumber": 32,
+          "status": "completed",
+          "conclusion": "success",
+          "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+          "startedAt": "2026-11-12T11:22:52Z",
+          "completedAt": "2026-11-12T11:24:15Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208649768"
+        },
+        {
+          "runNumber": 8,
+          "status": "completed",
+          "conclusion": "success",
+          "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+          "startedAt": "2026-11-12T11:22:52Z",
+          "completedAt": "2026-11-12T11:23:15Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208649764"
+        },
+        {
+          "runNumber": 18,
+          "status": "completed",
+          "conclusion": "success",
+          "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+          "startedAt": "2026-11-12T11:22:52Z",
+          "completedAt": "2026-11-12T11:24:36Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208649867"
+        },
+        {
+          "runNumber": 14,
+          "status": "completed",
+          "conclusion": "success",
+          "commitSha": "3b109edf52590a630f950409b1a1b9dc75ba55d6",
+          "startedAt": "2026-11-12T11:22:52Z",
+          "completedAt": "2026-11-12T11:27:37Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43208649803"
+        },
         {
           "runNumber": 11,
           "status": "completed",
@@ -93,51 +138,6 @@
           "startedAt": "2026-11-11T20:52:56Z",
           "completedAt": "2026-11-11T20:52:56Z",
           "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606387"
-        },
-        {
-          "runNumber": 30,
-          "status": "queued",
-          "conclusion": null,
-          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
-          "startedAt": "2026-11-11T20:52:56Z",
-          "completedAt": "2026-11-11T20:52:56Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606258"
-        },
-        {
-          "runNumber": 4,
-          "status": "queued",
-          "conclusion": null,
-          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
-          "startedAt": "2026-11-11T20:52:56Z",
-          "completedAt": "2026-11-11T20:52:56Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606356"
-        },
-        {
-          "runNumber": 3,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "aef11d1bd14751d05d4dc6903012a7ff38a13632",
-          "startedAt": "2026-11-11T16:27:41Z",
-          "completedAt": "2026-11-11T16:28:03Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43058548178"
-        },
-        {
-          "runNumber": 9,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "aef11d1bd14751d05d4dc6903012a7ff38a13632",
-          "startedAt": "2026-11-11T16:27:41Z",
-          "completedAt": "2026-11-11T16:32:48Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43058548198"
-        },
-        {
-          "runNumber": 29,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "aef11d1bd14751d05d4dc6903012a7ff38a13632",
-          "startedAt": "2026-11-11T16:27:41Z",
-          "completedAt": "2026-11-11T16:28:54Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43058548154"
         }
       ]
     },
