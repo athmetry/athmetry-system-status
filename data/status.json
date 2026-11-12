@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "collectedAt": "2026-11-11T19:09:06Z",
+  "collectedAt": "2026-11-11T20:58:39Z",
   "monitoredBranch": "main",
   "repositories": [
     {
@@ -9,74 +9,66 @@
       "repo": "athmetry-backend",
       "error": null,
       "latestRun": {
-        "status": "completed",
-        "conclusion": "success",
-        "runId": 43058548178,
-        "runNumber": 3,
-        "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43058548178",
-        "commitSha": "aef11d1bd14751d05d4dc6903012a7ff38a13632",
-        "commitMessage": "fix(ci): isolate zizmor archive extraction",
+        "status": "queued",
+        "conclusion": "unknown",
+        "runId": 43098606454,
+        "runNumber": 16,
+        "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606454",
+        "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
+        "commitMessage": "feat(auth): implement password recovery and management",
         "commitAuthor": "mdtausif1",
-        "startedAt": "2026-11-11T16:27:41Z",
-        "completedAt": "2026-11-11T16:28:03Z",
-        "jobs": [
-          {
-            "name": "Workflow security analysis (zizmor)",
-            "status": "completed",
-            "conclusion": "success",
-            "started_at": "2026-11-11T16:27:44Z",
-            "completed_at": "2026-11-11T16:27:50Z"
-          },
-          {
-            "name": "Secret scanning (Gitleaks)",
-            "status": "completed",
-            "conclusion": "success",
-            "started_at": "2026-11-11T16:27:44Z",
-            "completed_at": "2026-11-11T16:27:49Z"
-          },
-          {
-            "name": "Dependency audit (high and critical)",
-            "status": "completed",
-            "conclusion": "success",
-            "started_at": "2026-11-11T16:27:44Z",
-            "completed_at": "2026-11-11T16:28:02Z"
-          }
-        ]
+        "startedAt": "2026-11-11T20:52:56Z",
+        "completedAt": "2026-11-11T20:52:56Z",
+        "jobs": []
       },
-      "jobs": [
-        {
-          "name": "Workflow security analysis (zizmor)",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-11T16:27:44Z",
-          "completed_at": "2026-11-11T16:27:50Z"
-        },
-        {
-          "name": "Secret scanning (Gitleaks)",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-11T16:27:44Z",
-          "completed_at": "2026-11-11T16:27:49Z"
-        },
-        {
-          "name": "Dependency audit (high and critical)",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-11T16:27:44Z",
-          "completed_at": "2026-11-11T16:28:02Z"
-        }
-      ],
+      "jobs": [],
       "commit": {
-        "sha": "aef11d1bd14751d05d4dc6903012a7ff38a13632",
-        "message": "fix(ci): isolate zizmor archive extraction",
+        "sha": "a75dca316d3235318f832222d66ec222d8b950d3",
+        "message": "feat(auth): implement password recovery and management",
         "author": "mdtausif1"
       },
       "execution": {
-        "startedAt": "2026-11-11T16:27:41Z",
-        "completedAt": "2026-11-11T16:28:03Z",
+        "startedAt": "2026-11-11T20:52:56Z",
+        "completedAt": "2026-11-11T20:52:56Z",
         "duration": null
       },
       "history": [
+        {
+          "runNumber": 16,
+          "status": "queued",
+          "conclusion": null,
+          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
+          "startedAt": "2026-11-11T20:52:56Z",
+          "completedAt": "2026-11-11T20:52:56Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606454"
+        },
+        {
+          "runNumber": 10,
+          "status": "queued",
+          "conclusion": null,
+          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
+          "startedAt": "2026-11-11T20:52:56Z",
+          "completedAt": "2026-11-11T20:52:56Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606387"
+        },
+        {
+          "runNumber": 30,
+          "status": "queued",
+          "conclusion": null,
+          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
+          "startedAt": "2026-11-11T20:52:56Z",
+          "completedAt": "2026-11-11T20:52:56Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606258"
+        },
+        {
+          "runNumber": 4,
+          "status": "queued",
+          "conclusion": null,
+          "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
+          "startedAt": "2026-11-11T20:52:56Z",
+          "completedAt": "2026-11-11T20:52:56Z",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606356"
+        },
         {
           "runNumber": 3,
           "status": "completed",
@@ -130,42 +122,6 @@
           "startedAt": "2026-11-11T15:40:56Z",
           "completedAt": "2026-11-11T15:41:59Z",
           "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43050780938"
-        },
-        {
-          "runNumber": 8,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "e9a9de999d54f85a33af020e0970f97b0722ad7c",
-          "startedAt": "2026-11-11T15:40:56Z",
-          "completedAt": "2026-11-11T15:45:37Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43050780953"
-        },
-        {
-          "runNumber": 1,
-          "status": "completed",
-          "conclusion": "failure",
-          "commitSha": "769c99710052a69b60020aa3d4e93d95dcdebec2",
-          "startedAt": "2026-11-11T14:47:12Z",
-          "completedAt": "2026-11-11T14:47:42Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43041837965"
-        },
-        {
-          "runNumber": 27,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "769c99710052a69b60020aa3d4e93d95dcdebec2",
-          "startedAt": "2026-11-11T14:47:12Z",
-          "completedAt": "2026-11-11T14:48:23Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43041837659"
-        },
-        {
-          "runNumber": 15,
-          "status": "completed",
-          "conclusion": "success",
-          "commitSha": "769c99710052a69b60020aa3d4e93d95dcdebec2",
-          "startedAt": "2026-11-11T14:47:12Z",
-          "completedAt": "2026-11-11T14:49:00Z",
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43041838078"
         }
       ]
     },
@@ -185,25 +141,9 @@
         "commitAuthor": "mdtausif1",
         "startedAt": "2026-11-10T01:42:15Z",
         "completedAt": "2026-11-10T01:43:11Z",
-        "jobs": [
-          {
-            "name": "ci",
-            "status": "completed",
-            "conclusion": "success",
-            "started_at": "2026-11-10T01:42:19Z",
-            "completed_at": "2026-11-10T01:43:10Z"
-          }
-        ]
+        "jobs": []
       },
-      "jobs": [
-        {
-          "name": "ci",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-10T01:42:19Z",
-          "completed_at": "2026-11-10T01:43:10Z"
-        }
-      ],
+      "jobs": [],
       "commit": {
         "sha": "b827866f1f95965d6e4ffd099b610b4ba1981a71",
         "message": "docs: synchronize frontend project state and memory",
