@@ -95,7 +95,7 @@ docs/
 
 | Do | Don't |
 |----|-------|
-| "The collector runs every 5 minutes" | "The collector should run every 5 minutes" |
+| "The collector runs every 5 minutes" | "The collector runs after Backend events with a 30-minute fallback" |
 | "Set `BRANCH` in the script" | "You should set the branch" |
 | "Run `jq . data/status.json`" | "Validate the JSON somehow" |
 | "See `DATA_FLOW.md` for schema" | "Refer to the architecture docs" |

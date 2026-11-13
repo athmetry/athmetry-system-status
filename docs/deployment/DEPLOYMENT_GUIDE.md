@@ -45,7 +45,8 @@ locally before a push; it is not a workflow. See `GITHUB_ACTIONS.md` for details
 Fetches pipeline status from `athmetry-backend`, `athmetry-frontend`, and `athmetry-system-status`, generates `data/status.json`, commits it to the repository.
 
 ### Triggers
-- **Schedule**: Every 5 minutes (`cron: '*/5 * * * *'`)
+- **Backend event**: Push to `data/status-events/backend.json` on `main`
+- **Schedule fallback**: Every 30 minutes (`cron: '*/30 * * * *'`)
 - **Manual**: `workflow_dispatch` (Actions UI → "Run workflow")
 
 ### Permissions
@@ -174,7 +175,7 @@ concurrency:
 ### Scenario B: Collector Updates Status Data
 
 ```
-1. Cron triggers (every 5 min): collect-status.yml runs
+1. Backend event push or 30-minute fallback triggers collect-status.yml
         │
         ├──► Fetch latest runs from backend/frontend/system-status repos
         │

@@ -54,7 +54,7 @@ athmetry-system-status/
 │   └── validate-status-json.js  # Schema/data-contract validator
 ├── .github/
 │   ├── workflows/
-│   │   ├── collect-status.yml   # Collector: every 5 min + manual dispatch
+│   │   ├── collect-status.yml   # Collector: Backend event + 30-min fallback + manual dispatch
 │   │   ├── deploy-pages.yml     # Quality-gated Pages deployment
 │   │   └── security-scan.yml    # Gitleaks + zizmor security scanning
 │   ├── scripts/
@@ -68,7 +68,7 @@ athmetry-system-status/
 ## Architecture
 
 1. **Collector workflow** (`.github/workflows/collect-status.yml`)
-   - Runs on a schedule (`*/5 * * * *`, every 5 minutes) and on `workflow_dispatch`.
+   - Runs when the Backend reporter updates `data/status-events/backend.json` on `main`, on a 30-minute fallback schedule (`*/30 * * * *`), and on `workflow_dispatch`.
    - Uses a fine-grained GitHub Personal Access Token (`ATHMETRY_GITHUB_TOKEN`)
      stored as a repository Actions secret.
    - Calls the GitHub Actions REST API (`gh api`) to fetch the latest workflow
@@ -174,11 +174,16 @@ The `CNAME` file is reserved for the future custom domain. Do **not** add
 are ready to configure it, as doing so prematurely would break the default
 GitHub Pages URL.
 
-## Collector schedule
+## Collector triggers
 
-- Automatic: every 5 minutes (`*/5 * * * *` cron).
+- Event-driven: a Backend reporter push to
+  `data/status-events/backend.json` on `main` starts collection promptly.
+- Scheduled fallback: every 30 minutes (`*/30 * * * *` cron).
 - Manual: via the **Actions → Collect System Status → Run workflow** button in
   the GitHub UI (`workflow_dispatch`).
+
+The collector commits only `data/status.json`, so its own output does not match
+the event push path and cannot trigger another collector run.
 
 The collector runs independently of GitHub Pages refresh frequency.
 
@@ -390,8 +395,9 @@ returns an unusable payload, the footer shows `Visitor IP: Unavailable` and
    ```bash
    npx playwright --version
    ```
-   No browser test suite is committed; see `docs/development/TESTING_GUIDE.md`
-   for the manual and scripted checklist.
+   Committed Playwright tests cover Manual Refresh success, failure, timeout,
+   cache busting, and retention of valid dashboard data. See
+   `docs/development/TESTING_GUIDE.md` for the full checklist.
 
 ## How to add additional repositories and branches
 
@@ -419,7 +425,7 @@ collector's in-progress execution.
 | Status is "Unknown" for a repo | No workflow runs found on the monitored branch, or the token lacks read access to that repo. |
 | Collector fails to commit | `ATHMETRY_GITHUB_TOKEN` lacks `contents: write` on this repo. |
 | Pages site not updating | Ensure Pages source is set to "GitHub Actions" in repo settings. |
-| Stale data warning | Collector hasn't run recently (every 5 min). Check the Actions tab for failures. |
+| Stale data warning | The collector has not published data recently. Backend events normally trigger prompt collection; the 30-minute schedule is the fallback. Check the Actions tab for failures. |
 | System Status repo shows no pipelines | The `athmetry-system-status` repository may not have any workflows on `main`, or the collector hasn't run since adding it. |
 | Footer shows `Release v—` | `package.json` could not be fetched. Check that the file is deployed and served with the site. |
 | Visitor IP shows "Unavailable" | `ipwho.is` is blocked, rate-limited, or unreachable. This is non-blocking and expected in some networks. |

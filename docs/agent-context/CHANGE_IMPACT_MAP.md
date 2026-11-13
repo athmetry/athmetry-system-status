@@ -180,7 +180,7 @@ css/style.css media queries (mobile-first):
 #### Workflow Integration
 ```
 .github/workflows/collect-status.yml
-  ├── on: schedule (*/5 * * * *) + workflow_dispatch
+  ├── on: Backend event push + schedule (*/30 * * * *) + workflow_dispatch
   ├── permissions: contents: write
   ├── env: ATHMETRY_GITHUB_TOKEN (PAT)
   ├── Steps: checkout (with PAT) → git config → collect script → commit/push (with GITHUB_TOKEN)

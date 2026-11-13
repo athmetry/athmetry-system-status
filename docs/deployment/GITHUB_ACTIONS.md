@@ -8,7 +8,7 @@ This document provides a complete reference for all GitHub Actions workflows in 
 
 | File | Purpose | Triggers |
 |------|---------|----------|
-| `.github/workflows/collect-status.yml` | Collect pipeline status from monitored repos | Schedule (5 min), `workflow_dispatch` |
+| `.github/workflows/collect-status.yml` | Collect pipeline status from monitored repos | Backend event push, schedule (30-min fallback), `workflow_dispatch` |
 | `.github/workflows/deploy-pages.yml` | Quality-gated deployment of the static site to GitHub Pages | `workflow_run` completion of Security Scan or Collect System Status on `main` |
 | `.github/workflows/security-scan.yml` | Scan tracked files for secrets and workflows for security misconfigurations | Pull request to `main`, push to `main`, weekly schedule, `workflow_dispatch` |
 
@@ -23,8 +23,12 @@ name: Collect System Status
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/30 * * * *'  # 30-minute fallback
   workflow_dispatch:       # Manual trigger
+  push:                    # Prompt Backend event processing
+    branches: [main]
+    paths:
+      - 'data/status-events/backend.json'
 
 permissions:
   contents: write          # Required to commit status.json
@@ -92,8 +96,9 @@ jobs:
 | Aspect | Decision | Rationale |
 |--------|----------|-----------|
 | Checkout token | `ATHMETRY_GITHUB_TOKEN` (PAT) | Needs write access to commit |
+| Event trigger | Push to `data/status-events/backend.json` on `main` | Processes Backend reporter events promptly; the collector's `data/status.json` output is excluded, preventing a loop |
 | Push token | `GITHUB_TOKEN` (built-in) | Separate from PAT; least privilege |
-| Concurrency | `cancel-in-progress: false` | Don't interrupt collection; 5-min schedule is frequent enough |
+| Concurrency | `cancel-in-progress: false` | Don't interrupt an in-progress collection run |
 | Commit condition | Only if `git diff --quiet` fails | Avoid empty commits on every run |
 | Commit message | Includes timestamp | Audit trail, matches `collectedAt` |
 | Remote URL | Temporarily embeds token | Standard pattern for Actions push |
@@ -296,7 +301,7 @@ Gitleaks runs with `--redact` so secret values never appear in logs. Zizmor runs
 
 | Workflow | Schedule | Push | Manual | PR | workflow_run |
 |----------|----------|------|--------|-----|--------------|
-| collect-status | ✅ 5 min | ❌ | ✅ | ❌ | ❌ |
+| collect-status | ✅ 30 min fallback | ✅ Backend event path on `main` | ✅ | ❌ | ❌ |
 | deploy-pages | ❌ | ❌ | ❌ | ❌ | ✅ Security Scan / Collect System Status on `main` |
 | security-scan | ✅ weekly | ✅ main | ✅ | ✅ main | ❌ |
 

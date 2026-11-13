@@ -646,10 +646,11 @@ collect_repo() {
             local latest
             latest=$(printf '%s' "$runs_array" | jq -c '.[0]')
 
-            local head_sha run_id run_number status conclusion html_url started_at completed_at
+            local head_sha run_id run_number run_attempt status conclusion html_url started_at completed_at
             head_sha=$(printf '%s' "$latest" | jq -r 'if .head_sha != null then .head_sha else "" end')
             run_id=$(printf '%s' "$latest" | jq -r 'if .id != null then .id else "" end')
             run_number=$(printf '%s' "$latest" | jq -r 'if .run_number != null then .run_number else "" end')
+            run_attempt=$(printf '%s' "$latest" | jq -r 'if .run_attempt != null then .run_attempt else 1 end')
             status=$(printf '%s' "$latest" | jq -r 'if .status != null then .status else "unknown" end')
             conclusion=$(printf '%s' "$latest" | jq -r 'if .conclusion != null then .conclusion else "unknown" end')
             html_url=$(printf '%s' "$latest" | jq -r 'if .html_url != null then .html_url else "" end')
@@ -700,6 +701,7 @@ collect_repo() {
               --arg conclusion "$conclusion" \
               --arg runId "$run_id" \
               --arg runNumber "$run_number" \
+              --arg runAttempt "$run_attempt" \
               --arg runUrl "$html_url" \
               --arg commitSha "$head_sha" \
               --arg commitMessage "$commit_message" \
@@ -712,6 +714,7 @@ collect_repo() {
                 conclusion: $conclusion,
                 runId: ($runId | tonumber? // 0),
                 runNumber: ($runNumber | tonumber? // 0),
+                runAttempt: ($runAttempt | tonumber? // 1),
                 runUrl: $runUrl,
                 commitSha: $commitSha,
                 commitMessage: $commitMessage,

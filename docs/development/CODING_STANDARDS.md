@@ -85,6 +85,16 @@ const isTimeout = err.message === "Request timed out";
 showMessage(isTimeout ? "Timed out" : "Failed", "error");
 ```
 
+### Refresh Status Messaging
+
+Manual refresh must use the published `data/status.json` as its authoritative
+source. Update the dashboard only after the response passes schema validation,
+and expose success or failure through `#refresh-status` (`role="status"`,
+`aria-live="polite"`). A failed refresh must retain the last valid dashboard
+data and must not update the browser's "Last checked" timestamp. Browser refresh
+time is separate from the collector's `collectedAt` timestamp, and refresh
+messaging must not imply that a GitHub Actions collection was triggered.
+
 ### DOM Manipulation
 
 ```javascript

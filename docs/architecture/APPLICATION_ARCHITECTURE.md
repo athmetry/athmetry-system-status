@@ -49,7 +49,8 @@ app.js.init()
     ├─► setInterval(renderDashboard, 60000)  # Auto-refresh
     │
     ├─► refreshBtn.click → handleManualRefresh()
-    │       └─► renderDashboard() + loading/error/success states
+    │       └─► fetchStatus() (cache-busted published JSON) → validate
+    │           → render + visible loading/success/error state
     │
     ├─► fetchVisitorInfo() → ipwho.is (fire-and-forget)
     │
@@ -277,8 +278,8 @@ export const statusApi = new StatusApi();
 | JSON parse error | Same as above |
 | Stale data (>10 min) | Warning in alert banner; dashboard still renders last data |
 | Repo API error (collector) | `repo.error` field populated; frontend shows in alert banner |
-| Manual refresh timeout (10s) | Error toast "Refresh timed out. Showing last available data." |
-| Manual refresh network error | Error toast "Refresh failed. Showing last available data." |
+| Manual refresh timeout (10s) | Visible error message "Refresh timed out. Showing the last available published status."; valid dashboard data is retained |
+| Manual refresh network error | Visible error message "Refresh failed. Showing the last available published status."; valid dashboard data is retained |
 | IP lookup failure | Silent; footer shows "Unavailable" |
 | Theme localStorage unavailable | Defaults to light; no error |
 

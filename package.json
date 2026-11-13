@@ -2,6 +2,10 @@
   "name": "athmetry-system-status",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "test:browser": "playwright test",
+    "test:integration": "bash tests/integration/test_backend_integration.sh && bash tests/integration/test_workflow_triggers.sh && bash tests/integration/test_collector_preservation.sh"
+  },
   "dependencies": {
     "@playwright/test": "^1.65.0"
   }

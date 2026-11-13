@@ -34,7 +34,7 @@ Essential context for any AI agent working on this repository. Read this after `
 ### Three-Tier Architecture
 
 1. **Collector Tier** (server-side, scheduled)
-   - Runs every 5 minutes via GitHub Actions
+   - Runs after Backend events with a 30-minute scheduled fallback via GitHub Actions
    - Calls GitHub REST API for workflow run data
    - Normalizes and writes `data/status.json`
    - Commits only when changed
@@ -92,7 +92,7 @@ Root
 ├── package.json        # Dev tooling + release version source
 ├── .github/
 │   ├── workflows/
-│   │   ├── collect-status.yml   # Every 5 min + manual
+│   │   ├── collect-status.yml   # Backend event + 30-min fallback + manual
 │   │   ├── deploy-pages.yml     # Quality-gated deployment
 │   │   └── security-scan.yml    # gitleaks + zizmor
 │   ├── zizmor.yml               # Zizmor policy

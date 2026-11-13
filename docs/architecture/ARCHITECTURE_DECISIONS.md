@@ -31,14 +31,14 @@ This document records significant architectural decisions, their rationale, and 
 
 **Date**: 2026-11
 
-**Decision**: Run the status collector as a scheduled GitHub Actions workflow (`cron: '*/5 * * * *'`), not an external cron job or separate service.
+**Decision**: Run the status collector as a GitHub Actions workflow using Backend event pushes, a 30-minute scheduled fallback (`cron: '*/30 * * * *'`), and `workflow_dispatch`, not an external cron job or separate service.
 
 **Rationale**:
 - Native GitHub integration (no external infrastructure)
 - `gh` CLI pre-installed on runners
 - Built-in secret management (`ATHMETRY_GITHUB_TOKEN`)
 - Automatic retry, logs, and visibility in Actions tab
-- Free minutes on GitHub-hosted runners (sufficient for 5-min schedule)
+- Free minutes on GitHub-hosted runners (sufficient for event-driven and 30-minute fallback runs)
 
 **Trade-offs**:
 - Tied to GitHub platform
@@ -187,13 +187,13 @@ This document records significant architectural decisions, their rationale, and 
 **Decision**: Frontend polls `status.json` every 60 seconds via `setInterval`.
 
 **Rationale**:
-- Collector runs every 5 minutes — 60s refresh gives ~5x oversampling
+- Collector normally runs after Backend events, with a 30-minute fallback; 60s refresh keeps the published snapshot current
 - No WebSocket/server-sent events infrastructure needed
 - Simple, reliable, works everywhere
 - Low bandwidth (~5 KB × 60/hr = 300 KB/hr per client)
 
 **Trade-offs**:
-- Data up to 60s stale (plus collector 5-min latency)
+- Data up to 60s stale (plus collector/deployment latency)
 - Continuous network activity (minor)
 - No push notifications
 
@@ -209,7 +209,7 @@ This document records significant architectural decisions, their rationale, and 
 
 **Rationale**:
 - Clear separation: collector = server-side scheduled; refresh = client-side fetch
-- Collector runs on fixed schedule (5 min) — manual trigger adds complexity
+- Collector runs on Backend events with a 30-minute fallback — browser refresh does not trigger collection
 - Avoids GitHub Actions API rate limits from user clicks
 - User expectation: "refresh" = "show me latest published data"
 
@@ -221,11 +221,11 @@ This document records significant architectural decisions, their rationale, and 
 
 ---
 
-## ADR-011: Stale Threshold (10 min) ≠ Collector Schedule (5 min)
+## ADR-011: Stale Threshold (10 min) Is Independent of Collection Triggers
 
 **Date**: 2026-11
 
-**Decision**: Frontend considers data stale after 10 minutes; collector runs every 5 minutes.
+**Decision**: Frontend considers data stale after 10 minutes; Backend events normally trigger prompt collection, with a 30-minute scheduled fallback.
 
 **Rationale**:
 - Allows 1 collector failure without immediate alarm

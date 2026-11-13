@@ -108,7 +108,7 @@ Complete documentation for the Athmetry System Status repository.
 - `CNAME` — Custom domain (empty, reserved)
 
 ### GitHub Workflows
-- `.github/workflows/collect-status.yml` — Collector (5 min schedule)
+- `.github/workflows/collect-status.yml` — Collector (Backend event + 30-min fallback)
 - `.github/workflows/deploy-pages.yml` — Quality-gated Pages deployment
 - `.github/workflows/security-scan.yml` — gitleaks + zizmor security scanning
 - `.github/zizmor.yml` — Zizmor policy

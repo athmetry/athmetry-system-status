@@ -18,7 +18,7 @@ Target audience: Athmetry owners (2–3 users initially). No public access contr
 ┌─────────────────────────────────────────────────────────────────┐
 │                        GitHub Actions                           │
 ├─────────────────────────────────────────────────────────────────┤
-│  collect-status.yml (every 5 min)                               │
+│  collect-status.yml (Backend event + 30-min fallback)           │
 │       │                                                         │
 │       ▼                                                         │
 │  .github/scripts/collect-status.sh                              │
@@ -94,7 +94,7 @@ Target audience: Athmetry owners (2–3 users initially). No public access contr
 
 ## Data Flow Summary
 
-1. **Collection** (server-side, every 5 min):
+1. **Collection** (server-side; Backend event-driven with 30-minute fallback):
    - GitHub Actions runner executes `collect-status.sh`
    - Script calls GitHub REST API via `gh` CLI (auth: `ATHMETRY_GITHUB_TOKEN`)
    - Normalizes workflow run data → `data/status.json`
@@ -196,7 +196,7 @@ No staging, preview, or feature-branch deployments exist.
 - **Monitored Repos**: Currently 3 (backend, frontend, system-status). Extensible via `MONITORED_REPOS` array.
 - **Self-Monitoring**: the collector's own `collect-status.yml` is included; its most recent completed run is reported. All three System Status workflows (`collect-status.yml`, `deploy-pages.yml`, `security-scan.yml`) are visible.
 - **History Depth**: 5 runs per workflow (`MAX_RUNS_PER_WORKFLOW=5`, `per_page=5` in collector)
-- **Collector Frequency**: Every 5 minutes (cron `*/5 * * * *`)
+- **Collector Frequency**: Backend reporter event push plus a 30-minute fallback (cron `*/30 * * * *`)
 - **Frontend Refresh**: Every 60 seconds (auto) + manual
 - **GitHub API Rate Limits**: Fine-grained PAT has generous limits; 3 repos × (1 workflow listing + 1 run list per workflow + jobs/commit for the latest run) × 12/hr, well within limits.
 - **Pages Bandwidth**: GitHub Pages limits apply (soft limits, suitable for low-traffic internal tool)

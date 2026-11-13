@@ -95,10 +95,10 @@ function hideLoadingOverlay() {
 function updateLastUpdatedNow() {
   const lastUpdatedEl = document.getElementById('last-updated');
   if (lastUpdatedEl) {
-    lastUpdatedEl.textContent = 'Last updated: just now';
+    lastUpdatedEl.textContent = 'Last checked: just now';
     // Update to relative time after a short delay
     setTimeout(() => {
-      lastUpdatedEl.textContent = 'Last updated: a few seconds ago';
+      lastUpdatedEl.textContent = 'Last checked: a few seconds ago';
     }, 5000);
   }
 }
@@ -124,6 +124,21 @@ function initTheme() {
 /* ------------------------------------------------------------------ */
 
 const refreshBtn = document.getElementById("refresh-btn");
+const refreshStatusEl = document.getElementById("refresh-status");
+
+/**
+ * Show the result of the most recent published-status refresh attempt.
+ * @param {string} message - User-facing status message
+ * @param {string} state - One of loading, success, or error
+ */
+function setRefreshStatus(message, state) {
+  if (!refreshStatusEl) return;
+  refreshStatusEl.textContent = message;
+  refreshStatusEl.className = "refresh-message";
+  if (state) {
+    refreshStatusEl.classList.add(`is-${state}`);
+  }
+}
 
 async function handleManualRefresh() {
   // Prevent overlapping manual refresh requests
@@ -137,21 +152,32 @@ async function handleManualRefresh() {
     refreshBtn.disabled = true;
   }
 
+  setRefreshStatus("Checking latest published status...", "loading");
+
   try {
-    // Fetch live status data from GitHub API where possible
-    // Falls back to published data for private/inaccessible repos
-    const data = await statusApi.fetchLiveStatus();
-    // Update the dashboard with the fetched data (no full-page reload)
+    // The published status.json is the authoritative dashboard source.
+    // fetchStatus() adds cache busting, uses cache: "no-store", and validates
+    // the schema before the dashboard is updated.
+    const data = await statusApi.fetchStatus();
     await renderDashboard(data);
     updateLastUpdatedNow();
+    setRefreshStatus("Published status loaded.", "success");
   } catch (err) {
     console.error("Manual refresh failed:", err);
-    // Retain the last successfully rendered dashboard data where possible
+    // Retain the last successfully rendered dashboard data where possible.
     const lastValidData = statusApi.getLastValidData();
     if (lastValidData) {
       await renderDashboard(lastValidData);
+      const timedOut = err.message.includes("timed out");
+      setRefreshStatus(
+        timedOut
+          ? "Refresh timed out. Showing the last available published status."
+          : "Refresh failed. Showing the last available published status.",
+        "error"
+      );
     } else {
       renderErrorState("Unable to load status data. Please refresh or try again later.");
+      setRefreshStatus("Refresh failed. No previously published status is available.", "error");
     }
   } finally {
     // Remove the overlay only after fetch + rendering have completed (or failed)
@@ -256,14 +282,16 @@ function init() {
   // status data has been fetched and rendered (or the attempt has failed).
   renderDashboard()
     .then(() => {
-      // Reflect the browser's initial fetch time in the header.
+      // Reflect the browser's successful initial fetch time in the header.
       updateLastUpdatedNow();
+      setRefreshStatus("Published status loaded.", "success");
     })
     .catch((err) => {
       console.error("Failed to render dashboard:", err);
       // Surface the failure instead of leaving empty cards that look like
       // a healthy dashboard with zero pipelines.
       renderErrorState("Unable to load status data. Please refresh or try again later.");
+      setRefreshStatus("Failed to load published status.", "error");
     })
     .finally(() => {
       hideLoadingOverlay();
@@ -273,17 +301,19 @@ function init() {
   refreshTimer = setInterval(async () => {
     try {
       await renderDashboard();
-      // Update last-updated timestamp to actual browser check time
+      // Update last-checked timestamp to actual successful browser check time
       updateLastUpdatedNow();
+      setRefreshStatus("Published status loaded.", "success");
     } catch (err) {
       console.error("Failed to refresh dashboard:", err);
       
-      // Try to restore last valid data
+      // Try to restore last valid data without claiming the browser check
+      // succeeded. The header timestamp remains the last successful check.
       const lastValidData = statusApi.getLastValidData();
       if (lastValidData) {
         console.warn("Auto-refresh failed, restoring last valid data");
         await renderDashboard(lastValidData);
-        updateLastUpdatedNow();
+        setRefreshStatus("Automatic refresh failed. Showing the last available published status.", "error");
       }
     }
   }, REFRESH_INTERVAL_MS);

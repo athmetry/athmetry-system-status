@@ -1,0 +1,42 @@
+{
+  "payload": {
+    "repository": "athmetry/athmetry-backend",
+    "displayName": "Backend",
+    "product": "ATHMETRY-WEB",
+    "branch": "main",
+    "commit": {
+      "sha": "6cb7d54feef69089b06504eb033cd5c7c44541c7",
+      "message": "ci(codeql): run analysis weekly and on demand",
+      "author": "mdtausif1"
+    },
+    "workflow": {
+      "name": "Athmetry Backend Validation",
+      "runId": 43517315540,
+      "runNumber": 38,
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43517315540",
+      "status": "completed",
+      "conclusion": "success",
+      "effectiveStatus": "success",
+      "eventType": "push",
+      "triggeredAt": "2026-11-13T22:12:13Z",
+      "completedAt": "2026-11-13T22:13:33Z",
+      "jobs": [
+        {
+          "completed_at": "2026-11-13T22:13:32Z",
+          "conclusion": "success",
+          "name": "Lint, typecheck, test and build",
+          "started_at": "2026-11-13T22:12:16Z",
+          "status": "completed"
+        }
+      ]
+    },
+    "reportedAt": "2026-11-13T22:13:43Z",
+    "source": "workflow_run"
+  },
+  "meta": {
+    "reportedAt": "2026-11-13T22:13:44Z",
+    "sourceRunId": 43517315540,
+    "sourceRunAttempt": 1,
+    "version": 1
+  }
+}

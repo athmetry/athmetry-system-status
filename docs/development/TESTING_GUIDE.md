@@ -9,12 +9,12 @@ Testing has two layers:
    syntax, required files, and referenced brand assets. This is not a CI
    workflow: the repository intentionally runs only three workflows
    (collector, deploy, security).
-2. **Manual browser regression** — theme, refresh, rendering, responsive
-   layout, dialogs, footer, and alerts must still be verified in a real browser.
+2. **Browser regression** — committed Playwright tests cover Manual Refresh
+   success, failure, timeout, cache busting, and retention of valid dashboard
+   data; theme, rendering, responsive layout, dialogs, footer, and alerts also
+   require manual verification.
 
-No committed browser test suite exists. `@playwright/test` is installed as a
-development dependency and may be used for scripted local checks, but tests
-must run against a local server and must not modify production data.
+Browser tests run against a local server and must not modify production data.
 
 This document defines the validation and manual testing procedures to verify
 correctness before any release.
@@ -125,11 +125,11 @@ python3 -m http.server 8000
 |------|-------|----------|
 | Click refresh | Click "Refresh" button | Button disabled, spinner animates, label "Refreshing..." |
 | Loading overlay | During fetch | Overlay visible for at least 1 second |
-| Success message | Wait for fetch | "Status updated successfully" |
-| Error message | Disconnect network, click | "Refresh failed. Showing last available data." |
-| Timeout message | Block/delay the request >10s | "Refresh timed out. Showing last available data." |
+| Success message | Wait for fetch | "Published status loaded." |
+| Error message | Disconnect network, click | "Refresh failed. Showing the last available published status." |
+| Timeout message | Block/delay the request >10s | "Refresh timed out. Showing the last available published status." |
 | Data preserved | On error | Dashboard still shows previous data |
-| Last updated | After success | Header shows "Last updated: just now" |
+| Last checked | After success | Header shows "Last checked: just now"; this is separate from "Last collected" |
 | Keyboard accessible | Tab to button, Enter | Works without mouse |
 
 ### 8. Responsive Design Tests
@@ -314,6 +314,6 @@ Report results using the status vocabulary `PASS`, `FAIL`, `BLOCKED`, or
 ## Known Limitations
 - No committed browser test suite
 - IP lookup depends on external service
-- Stale threshold (10 min) > collector schedule (5 min) by design
+- Stale threshold (10 min) is independent of the 30-minute fallback schedule
 - CI/security workflows have not yet run on GitHub until pushed
 ```

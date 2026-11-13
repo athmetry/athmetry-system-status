@@ -2,10 +2,16 @@ name: Collect System Status
 
 on:
   schedule:
-    # Run automatically every 30 minutes.
+    # Run automatically every 30 minutes as a fallback.
     - cron: '*/30 * * * *'
   workflow_dispatch:
     # Allow manual execution.
+  push:
+    # Process Backend reporter events promptly. The collector's own output
+    # (data/status.json) is intentionally excluded to prevent a workflow loop.
+    branches: [main]
+    paths:
+      - 'data/status-events/backend.json'
 
 permissions:
   contents: write

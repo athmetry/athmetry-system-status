@@ -17,7 +17,7 @@ A lightweight, static engineering health monitoring website for Athmetry. Centra
 - **Phase 1**: Deployed at commit `57238f7`
 - **v1.0 release candidate**: complete in the working tree, awaiting the first push
 - **Workflows**: three — `collect-status.yml`, `deploy-pages.yml`, `security-scan.yml`
-- **Collector**: every 5 minutes via scheduled workflow; self-monitoring enabled
+- **Collector**: Backend-event driven, with a 30-minute scheduled fallback; self-monitoring enabled
 - **Deployment**: quality-gated on Security Scan via `workflow_run`
 - **Repositories**: Three cards — Backend (left), System Status (top-right), Frontend (bottom-right)
 - **Frontend**: Auto-refreshes every 60 seconds
@@ -43,7 +43,7 @@ athmetry-system-status/
 │   └── validate-status-json.js  # Schema/data-contract validator
 ├── .github/
 │   ├── workflows/
-│   │   ├── collect-status.yml   # Collector: every 5 min + workflow_dispatch
+│   │   ├── collect-status.yml   # Collector: Backend event + 30-min fallback + workflow_dispatch
 │   │   ├── deploy-pages.yml     # Quality-gated Pages deployment
 │   │   └── security-scan.yml    # gitleaks + zizmor security scanning
 │   ├── zizmor.yml               # Zizmor action-pinning policy
@@ -61,7 +61,7 @@ athmetry-system-status/
 
 **File:** `.github/scripts/collect-status.sh`
 
-1. **Trigger**: Cron `*/5 * * * *` (every 5 minutes) or `workflow_dispatch`
+1. **Triggers**: Backend event push (`data/status-events/backend.json` on `main`), cron `*/30 * * * *` fallback, or `workflow_dispatch`
 2. **Auth**: Uses `ATHMETRY_GITHUB_TOKEN` (fine-grained PAT) via `GH_TOKEN`
 3. **API Calls** (per repo):
    - `GET /repos/{owner}/{repo}/actions/workflows` — discover workflows
@@ -83,7 +83,7 @@ athmetry-system-status/
 
 1. **Initial Load**: `renderDashboard()` fetches `data/status.json?t=<timestamp>`
 2. **Auto-refresh**: Timer every 60s calls `renderDashboard()` — fetches latest published JSON
-3. **Manual Refresh**: Button calls `renderDashboard()` with loading state, 10s timeout, success/error message
+3. **Manual Refresh**: Button fetches the latest published `data/status.json` with cache busting, schema validation, a 10s timeout, and visible success/failure messaging; it does not trigger collection
 4. **Theme**: localStorage `athmetry-theme` + `data-theme` on `<html>`, applied before paint
 5. **IP Lookup**: `ipwho.is` (non-blocking, 5s timeout, shown in footer, "Unavailable" fallback)
 6. **Pipeline Details**: Row/button opens `pipeline-detail-dialog`; "View on GitHub" opens confirmation and uses `latestRun.runUrl`
@@ -96,7 +96,7 @@ athmetry-system-status/
 ## How Deployments Work
 
 ### Collector Workflow (`.github/workflows/collect-status.yml`)
-- **Triggers**: Schedule (5 min) + manual dispatch
+- **Triggers**: Backend event push on `main`, schedule (30-min fallback), and manual dispatch
 - **Permissions**: `contents: write` (to commit status.json)
 - **Auth**: `ATHMETRY_GITHUB_TOKEN` secret (fine-grained PAT)
 - **Output**: Commits `data/status.json` only when changed
@@ -220,7 +220,7 @@ Update the corresponding `docs/` file when changing:
 
 | Purpose | File |
 |---------|------|
-| Collector schedule | `.github/workflows/collect-status.yml` (cron: `*/5 * * * *`) |
+| Collector schedule | `.github/workflows/collect-status.yml` (Backend event push + cron: `*/30 * * * *`) |
 | Collector script | `.github/scripts/collect-status.sh` |
 | Pages deployment | `.github/workflows/deploy-pages.yml` (quality-gated `workflow_run`) |
 | Security scanning | `.github/workflows/security-scan.yml`, `.github/zizmor.yml` |
@@ -242,7 +242,7 @@ Update the corresponding `docs/` file when changing:
 - IP lookup uses external service (ipwho.is) — may fail/be blocked
 - No authentication on dashboard (public GitHub Pages)
 - Single branch monitoring (`main` only, configured in collector)
-- Stale threshold (10 min) ≠ collector schedule (5 min) — by design
+- Stale threshold (10 min) is independent of the 30-minute fallback schedule; Backend events normally trigger prompt collection
 - Manual Refresh fetches published JSON only; does NOT trigger collector
 - Deployment is gated on Security Scan and uses `workflow_run` (not `push`) because `GITHUB_TOKEN` pushes do not trigger push-based workflows
 - Collector-triggered deployments are allowed only when the revision differs from the last security-validated revision solely by `data/status.json`

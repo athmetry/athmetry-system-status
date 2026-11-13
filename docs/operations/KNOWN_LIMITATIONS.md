@@ -7,10 +7,10 @@ This document lists known limitations, design constraints, and intentional trade
 ## Architecture Limitations
 
 ### No Real-Time Updates
-- **Current**: Polling every 60 seconds (frontend) + collection every 5 minutes (collector)
-- **Latency**: Up to ~5 minutes for new pipeline runs to appear, plus up to 60s for frontend to fetch
+- **Current**: Polling every 60 seconds (frontend) + Backend-event-driven collection with a 30-minute fallback
+- **Latency**: Usually one collection/deployment cycle after a Backend event, plus up to 60s for the frontend to fetch
 - **Reason**: Static site architecture; no WebSocket server, no server-sent events
-- **Workaround**: Manual refresh button fetches latest published JSON immediately
+- **Workaround**: Manual refresh button fetches the latest published JSON immediately
 
 ### No Authentication / Access Control
 - **Current**: Public GitHub Pages URL, anyone can view
@@ -50,7 +50,7 @@ This document lists known limitations, design constraints, and intentional trade
 - **Workaround**: Manual workflow dispatch re-run
 
 ### Collector Commits Create Git History Noise
-- **Current**: One commit per data change (every 5 min when runs change)
+- **Current**: One commit per data change when runs change
 - **Impact**: `git log` cluttered with `chore(status): ...` commits
 - **Mitigation**: Only commits when JSON actually changes (`cmp -s`)
 
@@ -63,11 +63,10 @@ This document lists known limitations, design constraints, and intentional trade
 
 ## Frontend Limitations
 
-### Static Validation Only, No Browser Test Suite
-- **Current**: static validation (JS/JSON/HTML/CSS/schema/assets) runs locally before a push; browser flows are tested manually (`TESTING_GUIDE.md`)
-- **Risk**: UI and interaction regressions are caught only by human verification
+### Partial Browser Test Coverage
+- **Current**: static validation plus committed Playwright coverage for Manual Refresh success, failure, timeout, cache busting, and valid-data retention; broader browser flows are tested manually (`TESTING_GUIDE.md`)
+- **Risk**: UI and interaction regressions outside the scripted refresh cases are caught only by human verification
 - **Coverage**: Responsive (6 viewports × 2 themes), functional flows
-- **Tooling**: `@playwright/test` is installed but no committed browser suite exists
 
 ### No TypeScript / Type Safety
 - **Current**: Plain JavaScript (ES2020 modules)
@@ -86,11 +85,11 @@ This document lists known limitations, design constraints, and intentional trade
 - **Gap**: A `success: false` response without `ip` is treated as "Unavailable" but is not distinguished from a network failure
 - **No Fallback**: No alternative provider
 
-### Stale Threshold Independent of Collector Schedule
+### Stale Threshold Independent of Collector Triggers
 - **Frontend**: 10 minutes stale threshold
-- **Collector**: 5 minutes schedule
+- **Collector**: Backend event push plus 30-minute fallback schedule
 - **Gap**: Up to 10 minutes of stale data before warning
-- **Design**: Intentional (allows 1 collector failure without alarm)
+- **Design**: Intentional; event-driven collection normally keeps data much fresher
 
 ### Manual Refresh Does Not Trigger Collection
 - **Current**: Refresh button only re-fetches published `status.json`

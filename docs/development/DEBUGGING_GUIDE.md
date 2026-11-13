@@ -53,7 +53,7 @@ document.body.scrollWidth > window.innerWidth  // true = overflow
 **Causes & Fixes**:
 | Cause | Diagnosis | Fix |
 |-------|-----------|-----|
-| GitHub Pages slow | Network tab: request >10s | Increase `REFRESH_TIMEOUT_MS` in `app.js` (currently 10s) |
+| GitHub Pages slow | Network tab: request >10s | Increase `FETCH_TIMEOUT_MS` in `api.js` (currently 10s) |
 | Network offline | Console: "Failed to fetch" | Error toast appears; data preserved |
 | CORS issue | Console: CORS error | GitHub Pages serves from same origin; should not happen |
 

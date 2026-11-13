@@ -188,8 +188,12 @@ main() {
     DUPLICATE_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json")
     echo "$DUPLICATE_EVENT" > /tmp/duplicate_event.json
 
-    MERGED=$(merge_backend_event "$EXISTING_REPO" "$DUPLICATE_EVENT")
-    if echo "$MERGED" | grep -q "50000000000"; then
+    DUPLICATE_REPO=$(printf '%s' "$EXISTING_REPO" | jq '
+      .workflows[0].latestRun.runId = 43098606454 |
+      .workflows[0].latestRun.runAttempt = 1 |
+      .workflows[0].latestRun.commitMessage = "Duplicate marker"')
+    MERGED=$(merge_backend_event "$DUPLICATE_REPO" "$DUPLICATE_EVENT")
+    if echo "$MERGED" | jq -e '.workflows[0].latestRun.runId == 43098606454 and .workflows[0].latestRun.commitMessage == "Duplicate marker"' >/dev/null; then
         echo "✓ PASS: Duplicate event rejected - existing data preserved"
     else
         echo "✗ FAIL: Duplicate event should be rejected"

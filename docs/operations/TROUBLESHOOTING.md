@@ -115,12 +115,12 @@ renderDashboard()
 |-------|--------|
 | Button disabled during load? | `refreshBtn.disabled` should be true |
 | Spinner animating? | `.refresh-btn.refreshing .refresh-icon` → `animation: spin` |
-| Status message shows? | `#refresh-status` → "Checking latest published status..." |
+| Status message shows? | `#refresh-status` shows loading, success, failure, or timeout state |
 | Network request fires? | Network tab → `status.json?t=...` |
-| Timeout (10s)? | `REFRESH_TIMEOUT_MS` in `app.js` |
+| Timeout (10s)? | `FETCH_TIMEOUT_MS` in `api.js` |
 
 **Common Fixes**:
-- Increase `REFRESH_TIMEOUT_MS` if Pages slow
+- Increase `FETCH_TIMEOUT_MS` in `api.js` if Pages is slow
 - Check `handleManualRefresh` error handling
 - Ensure `setRefreshState(false)` called in finally/catch
 
@@ -193,10 +193,12 @@ refreshTimer = setInterval(() => renderDashboard(), 60000)
 
 ### No Data
 
-**Symptom**: Collector succeeds but `status.json` not updated / empty.
+**Symptom**: Collector succeeds but `status.json` not updated / empty, or a
+Backend event does not prompt a new collection run.
 
 | Check | Action |
 |-------|--------|
+| Backend event trigger | Confirm `data/status-events/backend.json` was pushed to `main` and the push-triggered collector run started |
 | `cmp -s` skipped commit? | Logs: "Status data unchanged; skipping commit" |
 | API returns no runs? | Check `total_count` in logs |
 | Wrong branch? | `BRANCH` variable in script |
@@ -297,7 +299,8 @@ completion (it deploys the new `data/status.json` revision).
 | Deploy not running | Check Actions → Deploy to GitHub Pages |
 | `collectedAt` wrong | Collector uses `date -u` (UTC) — should match |
 
-**Threshold**: 10 minutes (frontend) vs 5 minutes (collector) — by design.
+**Threshold**: 10 minutes (frontend). The collector normally reacts to Backend
+events promptly and retains a 30-minute scheduled fallback.
 
 ### JSON
 

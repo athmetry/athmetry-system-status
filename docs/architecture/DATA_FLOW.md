@@ -18,6 +18,12 @@ In addition to polling GitHub APIs, the collector can consume status events push
 
 **Event File**: `data/status-events/backend.json` (written by Backend's status reporter)
 
+**Collector Trigger**: A push of this file to `main` triggers
+`.github/workflows/collect-status.yml`. The collector's 30-minute schedule and
+`workflow_dispatch` remain available as fallback and manual triggers. The
+collector's own `data/status.json` commit is excluded from the push path, so it
+cannot create an infinite collection loop.
+
 **Event Structure**:
 ```json
 {
@@ -215,6 +221,7 @@ For each repository, the collector adds:
             "conclusion": "success",
             "runId": 43098606454,
             "runNumber": 16,
+            "runAttempt": 1,
             "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606454",
             "commitSha": "a75dca316d3235318f832222d66ec222d8b950d3",
             "commitMessage": "feat(auth): implement password recovery and management",
@@ -272,7 +279,7 @@ For each repository, the collector adds:
 | `repo.workflows[].effectiveStatus` | string | Derived: `success`|`failure`|`running`|`queued`|`unknown` |
 | `repo.workflows[].latestStatus` | string | GitHub `status` of latest run |
 | `repo.workflows[].latestConclusion` | string | GitHub `conclusion` of latest run |
-| `repo.workflows[].latestRun` | object/null | Most recent run: `status`, `conclusion`, `runId`, `runNumber`, `runUrl`, `commitSha`, `commitMessage`, `commitAuthor`, `startedAt`, `completedAt`, `jobs[]` |
+| `repo.workflows[].latestRun` | object/null | Most recent run: `status`, `conclusion`, `runId`, `runNumber`, `runAttempt`, `runUrl`, `commitSha`, `commitMessage`, `commitAuthor`, `startedAt`, `completedAt`, `jobs[]` |
 | `repo.workflows[].history[]` | array | Up to 5 runs (newest first) |
 
 ### History Entry Fields
@@ -309,7 +316,7 @@ cp "$tmp_file" "$STATUS_FILE"
 
 - Uses `cmp -s` (byte-for-byte comparison)
 - Commits only when JSON content actually changes
-- Prevents empty commits on every 5-minute run
+- Prevents empty commits on scheduled and event-driven runs
 
 ### Commit Message Format
 
@@ -341,7 +348,7 @@ const response = await fetch(url, { cache: "no-store" });
 | Trigger | Interval | Function |
 |---------|----------|----------|
 | Auto-refresh | 60 seconds | `setInterval(renderDashboard, 60000)` |
-| Manual refresh | On click | `handleManualRefresh()` → `renderDashboard()` |
+| Manual refresh | On click | `handleManualRefresh()` → cache-busted, validated fetch of published `data/status.json` |
 | Initial load | Once | `init()` → `renderDashboard()` |
 
 ### Stale Data Detection
@@ -356,8 +363,8 @@ isStale() {
 ```
 
 - **Frontend threshold**: 10 minutes (independent of collector schedule)
-- **Collector schedule**: Every 5 minutes
-- **Result**: Stale warning appears if collector fails for >2 consecutive runs
+- **Collector schedule**: Every 30 minutes (fallback; Backend events trigger prompt collection)
+- **Result**: Stale warning appears when the published `collectedAt` timestamp is older than 10 minutes
 
 ### Alert Conditions (Frontend)
 
@@ -471,9 +478,9 @@ Collector always produces all fields (null if unavailable). No optional fields i
 
 | Event | Frequency | Latency |
 |-------|-----------|---------|
-| Collector runs | Every 5 minutes | ~30-60 seconds (API calls) |
+| Collector runs | Backend event; 30-minute fallback | ~30-60 seconds (API calls) |
 | JSON committed | On change only | Immediate after collector |
-| Pages deploy | On push to main | ~1-3 minutes |
+| Pages deploy | After quality-gated `workflow_run` completion | ~1-3 minutes |
 | Frontend auto-refresh | Every 60 seconds | Network RTT (~100-500ms) |
 | Manual refresh | On demand | Network RTT + 10s timeout |
 | Stale warning | Checked each render | Shows at >10 min data age |

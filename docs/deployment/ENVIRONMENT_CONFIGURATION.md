@@ -50,7 +50,7 @@ Configured in: **Repository Settings → Secrets and variables → Actions**
 **Rotation**: When token expires or permissions change:
 1. Generate new token with same permissions
 2. Update secret in repository settings
-3. Next collector run (within 5 min) will use new token
+3. Next collector run (normally after the next Backend event; 30-minute fallback) will use new token
 
 ---
 
@@ -222,7 +222,7 @@ const REFRESH_INTERVAL_MS = 60 * 1000;        // Auto-refresh interval (60s)
 const THEME_KEY = "athmetry-theme";           // localStorage key
 const IP_LOOKUP_TIMEOUT_MS = 5000;            // ipwho.is timeout
 const IP_LOOKUP_URL = "https://ipwho.is/";   // IP lookup endpoint (CORS-enabled)
-const REFRESH_TIMEOUT_MS = 10000;             // Manual refresh timeout
+const FETCH_TIMEOUT_MS = 10000;              // Published-status fetch timeout
 ```
 
 ### js/api.js — API Configuration

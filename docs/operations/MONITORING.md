@@ -28,7 +28,7 @@ This document describes how to monitor the health of the Athmetry System Status 
 - **Green checkmark**: Collector succeeded
 - **Red X**: Collector failed — check logs
 - **Run duration**: Should be 30-60s
-- **Frequency**: Every 5 minutes (check timestamps)
+- **Frequency**: Backend reporter event pushes plus a 30-minute fallback (check timestamps)
 
 **Deploy**: Actions → Deploy to GitHub Pages
 - **Green checkmark**: Deploy succeeded
@@ -48,8 +48,8 @@ Visit: https://athmetry.github.io/athmetry-system-status/
 - **Overall status pill**: Green = healthy, Red = failure, Blue = running, Grey = unknown
 - **Stale data alert**: Yellow banner if `collectedAt` > 10 min
 - **Repo error alert**: Red banner if collector API failed
-- **Last updated timestamp**: Header shows `collectedAt`
-- **Last collected at**: Meta row shows collection timestamp
+- **Last checked timestamp**: Header shows the browser's last successful status check
+- **Last collected at**: Meta row shows the collector's actual `collectedAt` timestamp
 - **Console**: F12 → Check for errors (should be clean)
 
 ### 3. GitHub Repository Insights
@@ -97,7 +97,7 @@ By default, GitHub emails repository watchers on workflow failure.
 
 ### Daily (Automated via Collector)
 
-Collector runs every 5 minutes — implicit health check.
+Collector runs after Backend events with a 30-minute scheduled fallback — implicit health check.
 
 ### Weekly (Manual)
 
