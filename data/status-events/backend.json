@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "ab6de557d6f0330c5f10392ad58bd9aaa039f570",
-      "message": "ci: fix status reporter existing event fetch error handling",
+      "sha": "87a5d5aefc4e9134a2dbdd8c374047d3cfb4871f",
+      "message": "ci: fix JOBS_JSON reading in status reporter payload build",
       "author": "mdtausif1"
     },
     "workflow": {
       "name": "Athmetry Backend Validation",
-      "runId": 43503478312,
-      "runNumber": 35,
-      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43503478312",
+      "runId": 43507665478,
+      "runNumber": 37,
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43507665478",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-13T20:38:53Z",
-      "completedAt": "2026-11-13T20:40:07Z",
+      "triggeredAt": "2026-11-13T21:06:26Z",
+      "completedAt": "2026-11-13T21:07:45Z",
       "jobs": [
         {
-          "completed_at": "2026-11-13T20:40:07Z",
+          "completed_at": "2026-11-13T21:07:44Z",
           "conclusion": "success",
           "name": "Lint, typecheck, test and build",
-          "started_at": "2026-11-13T20:38:55Z",
+          "started_at": "2026-11-13T21:06:28Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-13T20:40:16Z",
+    "reportedAt": "2026-11-13T21:07:53Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-13T20:40:17Z",
-    "sourceRunId": 43503478312,
+    "reportedAt": "2026-11-13T21:07:54Z",
+    "sourceRunId": 43507665478,
     "sourceRunAttempt": 1,
     "version": 1
   }
