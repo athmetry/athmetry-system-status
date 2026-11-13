@@ -1,0 +1,15 @@
+# zizmor configuration for GitHub Actions security scanning.
+#
+# Existing Pages workflows use major-version tags for the two official Pages
+# actions (see docs/deployment/GITHUB_ACTIONS.md). Keep that convention while
+# requiring SHA pinning for actions/checkout, every other official action, and
+# every third-party action.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        'actions/checkout': hash-pin
+        'actions/upload-pages-artifact': ref-pin
+        'actions/deploy-pages': ref-pin
+        'actions/*': hash-pin
+        '*': hash-pin

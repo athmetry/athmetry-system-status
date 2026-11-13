@@ -25,10 +25,10 @@
   </script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="assets/brand/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="assets/brand/athmetry-app-icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/brand/athmetry-app-icon-light.svg" type="image/svg+xml" />
   <link rel="icon" href="assets/brand/icon-16.png" sizes="16x16" type="image/png" />
   <link rel="icon" href="assets/brand/icon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="assets/brand/athmetry-app-icon.svg" />
+  <link rel="apple-touch-icon" href="assets/brand/athmetry-app-icon-light.svg" />
 </head>
 <body>
   <header class="site-header">
@@ -49,6 +49,8 @@
         <span class="header-descriptor">SYSTEM STATUS</span>
       </div>
       <div class="header-actions">
+        <span id="last-updated" class="last-updated">Last updated: &mdash;</span>
+        <div class="header-divider" aria-hidden="true"></div>
         <button id="theme-toggle" class="icon-btn theme-toggle" aria-label="Switch to dark theme" title="Switch theme">
           <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -58,16 +60,7 @@
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
           </svg>
         </button>
-        <button id="refresh-btn" class="btn refresh-btn" aria-label="Refresh status" title="Refresh status">
-          <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
-            <path d="M21 3v6h-6"/>
-          </svg>
-          <span class="refresh-label">Refresh</span>
-        </button>
-        <span id="refresh-status" class="refresh-status" role="status" aria-live="polite"></span>
       </div>
-      <span id="last-updated" class="last-updated">Last updated: &mdash;</span>
     </div>
   </header>
 
@@ -80,6 +73,13 @@
           <span class="dot" aria-hidden="true"></span>
           <span id="overall-status-text">Unknown</span>
         </div>
+        <button id="refresh-btn" class="btn refresh-btn" aria-label="Refresh status" title="Refresh status">
+          <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+            <path d="M21 3v6h-6"/>
+          </svg>
+          <span class="refresh-label">Refresh</span>
+        </button>
       </div>
       <p id="overall-detail" class="overall-detail">No data collected yet.</p>
       <div class="meta-row">
@@ -91,78 +91,123 @@
 
     <!-- Repository and branch health -->
     <section class="repo-section" aria-labelledby="pipeline-heading">
-      <h2 id="pipeline-heading">Pipeline Health</h2>
-      <div class="repo-grid">
-        <!-- Backend repo health card -->
-        <article class="card repo-card" id="repo-row-backend" aria-label="Backend pipeline health">
-          <div class="repo-card-head">
-            <div class="repo-title">
-              <span class="repo-health-name">Backend</span>
-              <span class="repo-health-branch">main</span>
+      <h2 id="pipeline-heading">REPOSITORY PIPELINES</h2>
+      
+      <!-- Athmetry Web Repositories parent card -->
+      <article class="card web-repositories-card" aria-label="Athmetry Web Repositories pipeline health">
+        <div class="web-repositories-header">
+          <h3>ATHMETRY WEB</h3>
+        </div>
+        <div class="web-repositories-grid">
+          <!-- Backend repo health card (left column, full height) -->
+          <article class="card repo-card" id="repo-row-backend" aria-label="Backend pipeline health">
+            <div class="repo-card-header">
+              <div class="repo-card-title">
+                <div class="repo-icon-wrapper">
+                  <svg class="repo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M8 21h8"></path>
+                    <path d="M12 17v4"></path>
+                  </svg>
+                </div>
+                <div class="repo-title-info">
+                  <span class="repo-name">Backend</span>
+                  <span class="repo-meta" id="backend-repo-meta">2 pipelines · main branch</span>
+                  <span class="product-tag">ATHMETRY-WEB</span>
+                </div>
+              </div>
+              <div class="repo-overall-status">
+                <div class="status-pill status-unknown repo-overall-pill" id="backend-overall-pill">
+                  <span class="dot" aria-hidden="true"></span>
+                  <span class="status-text">Unknown</span>
+                </div>
+              </div>
             </div>
-            <div class="status-pill status-unknown repo-status-pill">
-              <span class="dot status-dot" aria-hidden="true"></span>
-              <span class="status-text">Unknown</span>
+            <div class="pipelines-container">
+              <div class="pipelines-header">
+                <span class="pipelines-title">Pipelines</span>
+                <span class="pipelines-count" id="backend-pipelines-count">0</span>
+              </div>
+              <div class="pipelines-list" id="backend-pipelines-list">
+                <div class="pipeline-empty">Loading pipelines...</div>
+              </div>
             </div>
-          </div>
-          <dl class="repo-meta">
-            <div class="repo-meta-item">
-              <dt>Latest run</dt>
-              <dd class="repo-run">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Commit</dt>
-              <dd class="repo-commit">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Started</dt>
-              <dd class="repo-started">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Duration</dt>
-              <dd class="repo-duration">&mdash;</dd>
-            </div>
-          </dl>
-          <div class="repo-card-actions">
-            <button class="btn view-runs-btn" type="button">View runs</button>
-          </div>
-        </article>
+          </article>
 
-        <!-- Frontend repo health card -->
-        <article class="card repo-card" id="repo-row-frontend" aria-label="Frontend pipeline health">
-          <div class="repo-card-head">
-            <div class="repo-title">
-              <span class="repo-health-name">Frontend</span>
-              <span class="repo-health-branch">main</span>
-            </div>
-            <div class="status-pill status-unknown repo-status-pill">
-              <span class="dot status-dot" aria-hidden="true"></span>
-              <span class="status-text">Unknown</span>
-            </div>
+          <!-- Right column: System Status (top) and Frontend (bottom) -->
+          <div class="repo-card-stack">
+            <!-- System Status repo health card (top-right) -->
+            <article class="card repo-card" id="repo-row-system-status" aria-label="System Status Page pipeline health">
+              <div class="repo-card-header">
+                <div class="repo-card-title">
+                  <div class="repo-icon-wrapper">
+                    <svg class="repo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M8 21h8"></path>
+                      <path d="M12 17v4"></path>
+                    </svg>
+                  </div>
+                  <div class="repo-title-info">
+                    <span class="repo-name">System Status Page</span>
+                    <span class="repo-meta" id="system-status-repo-meta">1 pipeline · main branch</span>
+                    <span class="product-tag">ATHMETRY-SYSTEM-STATUS</span>
+                  </div>
+                </div>
+                <div class="repo-overall-status">
+                  <div class="status-pill status-unknown repo-overall-pill" id="system-status-overall-pill">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span class="status-text">Unknown</span>
+                  </div>
+                </div>
+              </div>
+              <div class="pipelines-container">
+                <div class="pipelines-header">
+                  <span class="pipelines-title">Pipelines</span>
+                  <span class="pipelines-count" id="system-status-pipelines-count">0</span>
+                </div>
+                <div class="pipelines-list" id="system-status-pipelines-list">
+                  <div class="pipeline-empty">Loading pipelines...</div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Frontend repo health card (bottom-right) -->
+            <article class="card repo-card" id="repo-row-frontend" aria-label="Frontend pipeline health">
+              <div class="repo-card-header">
+                <div class="repo-card-title">
+                  <div class="repo-icon-wrapper">
+                    <svg class="repo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M8 21h8"></path>
+                      <path d="M12 17v4"></path>
+                    </svg>
+                  </div>
+                  <div class="repo-title-info">
+                    <span class="repo-name">Frontend</span>
+                    <span class="repo-meta" id="frontend-repo-meta">2 pipelines · main branch</span>
+                    <span class="product-tag">ATHMETRY-WEB</span>
+                  </div>
+                </div>
+                <div class="repo-overall-status">
+                  <div class="status-pill status-unknown repo-overall-pill" id="frontend-overall-pill">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span class="status-text">Unknown</span>
+                  </div>
+                </div>
+              </div>
+              <div class="pipelines-container">
+                <div class="pipelines-header">
+                  <span class="pipelines-title">Pipelines</span>
+                  <span class="pipelines-count" id="frontend-pipelines-count">0</span>
+                </div>
+                <div class="pipelines-list" id="frontend-pipelines-list">
+                  <div class="pipeline-empty">Loading pipelines...</div>
+                </div>
+              </div>
+            </article>
           </div>
-          <dl class="repo-meta">
-            <div class="repo-meta-item">
-              <dt>Latest run</dt>
-              <dd class="repo-run">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Commit</dt>
-              <dd class="repo-commit">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Started</dt>
-              <dd class="repo-started">&mdash;</dd>
-            </div>
-            <div class="repo-meta-item">
-              <dt>Duration</dt>
-              <dd class="repo-duration">&mdash;</dd>
-            </div>
-          </dl>
-          <div class="repo-card-actions">
-            <button class="btn view-runs-btn" type="button">View runs</button>
-          </div>
-        </article>
-      </div>
+        </div>
+      </article>
     </section>
 
     <!-- Confirmation dialog: Open GitHub Actions? -->
@@ -177,29 +222,26 @@
       </div>
     </dialog>
 
-    <!-- Execution history -->
-    <section class="card history-card" aria-labelledby="history-heading">
-      <h2 id="history-heading">Recent Execution History</h2>
-      <div class="history-tabs" role="tablist" aria-label="Repository history">
-        <button class="tab active" type="button" role="tab" aria-selected="true" data-repo="athmetry-backend">Backend</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-repo="athmetry-frontend">Frontend</button>
+    <!-- Pipeline detail dialog -->
+    <dialog id="pipeline-detail-dialog" class="pipeline-detail-dialog" aria-modal="true" aria-labelledby="pipeline-detail-title">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <div class="dialog-header-left">
+            <img class="dialog-logo dialog-logo-light" src="assets/brand/athmetry-app-icon-light.svg" alt="" width="28" height="28" />
+            <img class="dialog-logo dialog-logo-dark" src="assets/brand/athmetry-app-icon-dark.svg" alt="" width="28" height="28" />
+            <h2 id="pipeline-detail-title">Pipeline Details</h2>
+          </div>
+          <button class="icon-btn dialog-close" aria-label="Close dialog">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="dialog-body" id="pipeline-detail-body"></div>
+        <div class="dialog-footer" id="pipeline-detail-footer"></div>
       </div>
-      <div class="history-table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>Run</th>
-              <th>Commit</th>
-              <th>Outcome</th>
-              <th>Timestamp</th>
-              <th>Duration</th>
-              <th>Log URL</th>
-            </tr>
-          </thead>
-          <tbody id="history-body"></tbody>
-        </table>
-      </div>
-    </section>
+    </dialog>
 
     <!-- Alerts -->
     <section class="card alert-card" id="alert-card" style="display:none;" aria-live="polite">
@@ -213,33 +255,28 @@
       <div class="footer-left">
         <img
           class="footer-logo footer-logo-light"
-          src="assets/brand/athmetry-logo-transparent-light.svg"
+          src="assets/brand/athmetry-app-icon-light.svg"
           alt="Athmetry"
           height="36"
         />
         <img
           class="footer-logo footer-logo-dark"
-          src="assets/brand/athmetry-logo-transparent-dark.svg"
+          src="assets/brand/athmetry-app-icon-dark.svg"
           alt="Athmetry"
           height="36"
         />
-        <span class="footer-company">Athmetry Private Limited</span>
+        <div class="footer-company-info">
+          <span class="footer-company">Athmetry Private Limited</span>
+          <span class="footer-location">Bengaluru, India</span>
+        </div>
       </div>
       <div class="footer-center">
-        <span class="footer-flag" aria-hidden="true">
-          <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="20" height="14" rx="2" fill="#FF9933"/>
-            <rect y="4.67" width="20" height="4.66" fill="#FFFFFF"/>
-            <rect y="9.33" width="20" height="4.67" fill="#138808"/>
-            <circle cx="10" cy="7" r="2.5" fill="#000080"/>
-          </svg>
-        </span>
-        <span class="footer-location">Bengaluru, India</span>
+        <p class="footer-description">Athmetry System Status provides real-time visibility into repository health, GitHub Actions and deployment pipeline status, workflow execution history and logs, system status alerts and collector health, and the latest successful builds and recent changes on the main branch.</p>
       </div>
       <a class="footer-link" href="https://athmetry.com" target="_blank" rel="noopener noreferrer">athmetry.com</a>
     </div>
     <div class="footer-lower">
-      <div class="footer-copyright">&copy; 2026 Athmetry Private Limited</div>
+      <div class="footer-copyright">&copy; 2026 Athmetry Private Limited &middot; <span id="release-version">Release v1.0</span></div>
       <div class="footer-visitor" id="footer-visitor">
         <div class="footer-visitor-header">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -249,14 +286,23 @@
           <div id="visitor-ip">Visitor IP: Unavailable</div>
           <div id="visitor-location">Approx. Location: Unavailable</div>
         </div>
-        <p class="footer-note">
-          Visitor IP and approximate location are obtained through an external IP lookup service
-          (ipinfo.io). This information is not stored or persisted. IP geolocation is approximate
-          and can be affected by VPNs and network routing.
-        </p>
       </div>
     </div>
   </footer>
+
+  <!-- Loading overlay — visible by default so it covers initial page load/reload;
+       js/app.js removes it once the initial status data has been fetched and rendered -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Loading Athmetry System Status">
+    <div class="loading-inner">
+      <div class="loading-brand">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <img class="loading-logo loading-logo-light" src="assets/brand/athmetry-app-icon-light.svg" alt="" width="36" height="36" />
+        <img class="loading-logo loading-logo-dark" src="assets/brand/athmetry-app-icon-dark.svg" alt="" width="36" height="36" />
+      </div>
+      <div class="loading-text">Loading status...</div>
+      <div class="loading-subtext">Fetching latest pipeline data</div>
+    </div>
+  </div>
 
   <script type="module" src="js/app.js"></script>
 </body>

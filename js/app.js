@@ -6,12 +6,13 @@
  */
 
 import { statusApi } from "./api.js";
-import { renderDashboard } from "./dashboard.js";
+import { renderDashboard, renderErrorState } from "./dashboard.js";
 
 const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
 const THEME_KEY = "athmetry-theme";
 const IP_LOOKUP_TIMEOUT_MS = 5000;
-const IP_LOOKUP_URL = "https://ipinfo.io/json";
+// Use ipwho.is which supports CORS for browser requests
+const IP_LOOKUP_URL = "https://ipwho.is/";
 
 let refreshTimer = null;
 let isRefreshing = false;
@@ -54,6 +55,54 @@ function setTheme(theme) {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Loading overlay                                                    */
+/* ------------------------------------------------------------------ */
+
+const loadingOverlay = document.getElementById("loading-overlay");
+// The overlay must remain visible for at least 1.5 seconds, and longer if
+// loading/rendering is still in progress.
+const MIN_OVERLAY_VISIBLE_MS = 1500;
+const OVERLAY_FADE_OUT_MS = 300;
+let overlayShownAt = 0;
+let overlayHideTimer = null;
+
+function showLoadingOverlay() {
+  if (!loadingOverlay) return;
+  overlayShownAt = Date.now();
+  if (overlayHideTimer) {
+    clearTimeout(overlayHideTimer);
+    overlayHideTimer = null;
+  }
+  loadingOverlay.classList.remove("hidden", "is-hiding");
+}
+
+function hideLoadingOverlay() {
+  if (!loadingOverlay) return;
+  if (overlayHideTimer) clearTimeout(overlayHideTimer);
+  // Enforce the minimum visible duration, then dismiss the overlay smoothly.
+  const remaining = Math.max(0, MIN_OVERLAY_VISIBLE_MS - (Date.now() - overlayShownAt));
+  overlayHideTimer = setTimeout(() => {
+    loadingOverlay.classList.add("is-hiding");
+    overlayHideTimer = setTimeout(() => {
+      loadingOverlay.classList.add("hidden");
+      loadingOverlay.classList.remove("is-hiding");
+      overlayHideTimer = null;
+    }, OVERLAY_FADE_OUT_MS);
+  }, remaining);
+}
+
+function updateLastUpdatedNow() {
+  const lastUpdatedEl = document.getElementById('last-updated');
+  if (lastUpdatedEl) {
+    lastUpdatedEl.textContent = 'Last updated: just now';
+    // Update to relative time after a short delay
+    setTimeout(() => {
+      lastUpdatedEl.textContent = 'Last updated: a few seconds ago';
+    }, 5000);
+  }
+}
+
 function initTheme() {
   const stored = getStoredTheme();
   if (stored === "light" || stored === "dark") {
@@ -75,129 +124,50 @@ function initTheme() {
 /* ------------------------------------------------------------------ */
 
 const refreshBtn = document.getElementById("refresh-btn");
-const refreshStatus = document.getElementById("refresh-status");
-
-const REFRESH_TIMEOUT_MS = 10000; // 10 second timeout
-
-function setRefreshState(loading) {
-  isRefreshing = loading;
-  if (refreshBtn) {
-    refreshBtn.disabled = loading;
-    refreshBtn.classList.toggle("refreshing", loading);
-    // Update button label
-    const label = refreshBtn.querySelector('.refresh-label');
-    if (label) {
-      label.textContent = loading ? "Refreshing..." : "Refresh";
-    }
-  }
-  if (refreshStatus && loading) {
-    // Only set loading message; success/error messages are set separately after loading ends
-    refreshStatus.textContent = "Checking latest published status...";
-    refreshStatus.className = "refresh-status loading";
-  }
-}
-
-function showRefreshMessage(text, kind) {
-  if (!refreshStatus) return;
-  refreshStatus.textContent = text;
-  refreshStatus.className = `refresh-status ${kind}`;
-  // Clear after 4 seconds for better visibility
-  setTimeout(() => {
-    refreshStatus.textContent = "";
-    refreshStatus.className = "refresh-status";
-  }, 4000);
-}
 
 async function handleManualRefresh() {
+  // Prevent overlapping manual refresh requests
   if (isRefreshing) return;
+  isRefreshing = true;
 
-  setRefreshState(true);
-
-  // Create a timeout promise
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Request timed out")), REFRESH_TIMEOUT_MS);
-  });
+  // Full-screen loading overlay for the duration of the manual refresh
+  showLoadingOverlay();
+  if (refreshBtn) {
+    refreshBtn.classList.add('refreshing');
+    refreshBtn.disabled = true;
+  }
 
   try {
-    // renderDashboard calls statusApi.fetchStatus() which already uses
-    // cache-busting (?t=timestamp). This fetches the latest published JSON
-    // from GitHub Pages without triggering any GitHub Actions collector workflow.
-    // The collector runs on its own schedule (every 5 minutes).
-    await Promise.race([renderDashboard(), timeoutPromise]);
-    // Show success message AFTER loading state ends
-    setRefreshState(false);
-    showRefreshMessage("Status updated successfully", "success");
+    // Fetch fresh published status data via the existing API mechanism
+    const data = await statusApi.fetchStatus();
+    // Update the dashboard with the fetched data (no full-page reload)
+    await renderDashboard(data);
+    updateLastUpdatedNow();
   } catch (err) {
-    // Preserve previously displayed data — do not reset the dashboard.
     console.error("Manual refresh failed:", err);
-    const isTimeout = err.message === "Request timed out";
-    // Show error message AFTER loading state ends
-    setRefreshState(false);
-    showRefreshMessage(
-      isTimeout ? "Refresh timed out. Showing last available data." : "Refresh failed. Showing last available data.",
-      "error"
-    );
+    // Retain the last successfully rendered dashboard data where possible
+    const lastValidData = statusApi.getLastValidData();
+    if (lastValidData) {
+      await renderDashboard(lastValidData);
+    } else {
+      renderErrorState("Unable to load status data. Please refresh or try again later.");
+    }
+  } finally {
+    // Remove the overlay only after fetch + rendering have completed (or failed)
+    hideLoadingOverlay();
+    if (refreshBtn) {
+      refreshBtn.classList.remove('refreshing');
+      refreshBtn.disabled = false;
+    }
+    isRefreshing = false;
   }
 }
 
 /* ------------------------------------------------------------------ */
-/* GitHub Actions confirmation dialog                                 */
+/* Pipeline detail dialog (handled in dashboard.js)                   */
 /* ------------------------------------------------------------------ */
 
-const viewRunsBtns = document.querySelectorAll(".view-runs-btn");
-const githubActionsDialog = document.getElementById("github-actions-dialog");
-
-if (viewRunsBtns.length > 0 && githubActionsDialog) {
-  // Define the repository-specific GitHub Actions URLs
-  const githubUrls = {
-    backend: "https://github.com/athmetry/athmetry-backend/actions",
-    frontend: "https://github.com/athmetry/athmetry-frontend/actions",
-  };
-
-  // Open the dialog for the selected repository
-  function openGitHubActionsDialog(repo) {
-    const url = githubUrls[repo] || "#";
-    const continueBtn = githubActionsDialog.querySelector(".dialog-continue");
-    if (continueBtn) {
-      continueBtn.href = url;
-    }
-    githubActionsDialog.showModal();
-  }
-
-  // Close the dialog
-  function closeGitHubActionsDialog() {
-    githubActionsDialog.close();
-  }
-
-  // Event listeners for View runs buttons
-  viewRunsBtns.forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const repoCard = btn.closest(".repo-card");
-      const repoId = repoCard.getAttribute("id").replace("repo-row-", "");
-      openGitHubActionsDialog(repoId);
-    });
-  });
-
-  // Close dialog buttons
-  const dialogCancelBtns = githubActionsDialog.querySelectorAll(".dialog-cancel");
-  dialogCancelBtns.forEach((btn) => {
-    btn.addEventListener("click", closeGitHubActionsDialog);
-  });
-
-  // Close on Escape key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && githubActionsDialog.open) {
-      closeGitHubActionsDialog();
-    }
-  });
-
-  // Close on background click
-  githubActionsDialog.addEventListener("click", (e) => {
-    if (e.target === githubActionsDialog) {
-      closeGitHubActionsDialog();
-    }
-  });
-}
+// Pipeline detail dialog is handled entirely in dashboard.js
 
 /* ------------------------------------------------------------------ */
 /* Visitor IP & approximate location                                  */
@@ -231,7 +201,9 @@ async function fetchVisitorInfo() {
       visitorIpEl.textContent = `Visitor IP: ${data.ip || "Unavailable"}`;
     }
     if (visitorLocEl) {
-      const parts = [data.city, data.region, data.country].filter(Boolean);
+      // ipapi.co uses country_name, ipinfo.io uses country
+      const country = data.country_name || data.country;
+      const parts = [data.city, data.region, country].filter(Boolean);
       visitorLocEl.textContent =
         parts.length > 0 ? `Approx. Location: ${parts.join(", ")}` : "Approx. Location: Unavailable";
     }
@@ -245,6 +217,29 @@ async function fetchVisitorInfo() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Release version (from package.json — single source of truth)       */
+/* ------------------------------------------------------------------ */
+
+const releaseVersionEl = document.getElementById("release-version");
+
+async function fetchReleaseVersion() {
+  if (!releaseVersionEl) return;
+  try {
+    const response = await fetch("package.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const pkg = await response.json();
+    if (pkg.version) {
+      // Display major version only (e.g., "1.0.0" → "Release v1.0")
+      const majorMinor = pkg.version.split(".").slice(0, 2).join(".");
+      releaseVersionEl.textContent = `Release v${majorMinor}`;
+    }
+  } catch (err) {
+    // Graceful fallback — keep placeholder
+    console.debug("Release version unavailable:", err.message);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Initialisation                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -252,16 +247,44 @@ function init() {
   // Apply theme before rendering to prevent flashing.
   initTheme();
 
-  // Initial dashboard render.
-  renderDashboard().catch((err) => {
-    console.error("Failed to render dashboard:", err);
-  });
+  // Show the full-screen loading overlay immediately (it is also visible by
+  // default in the markup, so it covers initial page load/reload before JS runs).
+  showLoadingOverlay();
+
+  // Initial dashboard render; the overlay is removed only after the initial
+  // status data has been fetched and rendered (or the attempt has failed).
+  renderDashboard()
+    .then(() => {
+      // Reflect the browser's initial fetch time in the header.
+      updateLastUpdatedNow();
+    })
+    .catch((err) => {
+      console.error("Failed to render dashboard:", err);
+      // Surface the failure instead of leaving empty cards that look like
+      // a healthy dashboard with zero pipelines.
+      renderErrorState("Unable to load status data. Please refresh or try again later.");
+    })
+    .finally(() => {
+      hideLoadingOverlay();
+    });
 
   // Schedule automatic refresh without reloading the whole page.
-  refreshTimer = setInterval(() => {
-    renderDashboard().catch((err) => {
+  refreshTimer = setInterval(async () => {
+    try {
+      await renderDashboard();
+      // Update last-updated timestamp to actual browser check time
+      updateLastUpdatedNow();
+    } catch (err) {
       console.error("Failed to refresh dashboard:", err);
-    });
+      
+      // Try to restore last valid data
+      const lastValidData = statusApi.getLastValidData();
+      if (lastValidData) {
+        console.warn("Auto-refresh failed, restoring last valid data");
+        await renderDashboard(lastValidData);
+        updateLastUpdatedNow();
+      }
+    }
   }, REFRESH_INTERVAL_MS);
 
   // Manual refresh button.
@@ -271,6 +294,9 @@ function init() {
 
   // Visitor IP lookup (non-blocking, fire and forget).
   fetchVisitorInfo();
+
+  // Release version from package.json (non-blocking).
+  fetchReleaseVersion();
 
   // Clean up timer on page unload.
   window.addEventListener("beforeunload", () => {

@@ -1,22 +1,134 @@
 name: Deploy to GitHub Pages
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+# Quality-gated deployment.
+#
+# The site is deployed only after the Security Scan succeeds on `main`. Two
+# details drive this design:
+#
+# 1. Pushes made with the built-in GITHUB_TOKEN do not trigger push-based
+#    workflows (GitHub loop prevention). The collector commits status data with
+#    GITHUB_TOKEN, so a plain `on: push` deployment would never see those
+#    commits. `workflow_run` completion events do fire regardless, so the
+#    collector's successful completion is used as the data-freshness trigger.
+# 2. A collector commit only changes data/status.json. The gate therefore
+#    allows deployment when the current `main` head differs from the latest
+#    security-validated revision only by data/status.json. Any other change
+#    (i.e. unvalidated code) blocks deployment until the Security Scan passes
+#    for it.
+#
+# Pull-request runs, failed/cancelled runs, stale revisions and duplicate
+# deployments are all blocked by the gate job.
 
+on: # zizmor: ignore[dangerous-triggers] workflow_run is gated to main-only, security-validated revisions with a trusted checkout
+  workflow_run:
+    workflows: ["Security Scan", "Collect System Status"]
+    types: [completed]
+    branches: [main]
+
+# Least privilege at the workflow level; write scopes are granted only to the
+# deploy job that actually needs them.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
+  gate:
+    name: Verify deployment gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      deploy: ${{ steps.gate.outputs.deploy }}
+      sha: ${{ steps.gate.outputs.sha }}
+      reason: ${{ steps.gate.outputs.reason }}
+    steps:
+      - name: Evaluate quality gate
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
+          TRIGGER_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TRIGGER_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+
+          deploy=false
+          sha=""
+          reason=""
+
+          head=$(gh api "repos/${REPO}/git/ref/heads/main" --jq '.object.sha')
+
+          if [[ "${TRIGGER_BRANCH}" != "main" ]]; then
+            reason="triggering run was not on main (${TRIGGER_BRANCH})"
+          elif [[ "${TRIGGER_CONCLUSION}" != "success" ]]; then
+            reason="triggering run did not succeed (${TRIGGER_CONCLUSION})"
+          else
+            # The latest successful Security Scan on main is the validated base.
+            validated=$(gh api \
+              "repos/${REPO}/actions/workflows/security-scan.yml/runs?branch=main&per_page=30" \
+              --jq '[.workflow_runs[] | select(.status == "completed" and .conclusion == "success")][0].head_sha // ""')
+
+            if [[ -z "${validated}" ]]; then
+              reason="no successful Security Scan on main"
+            elif [[ "${validated}" == "${head}" ]]; then
+              deploy=true
+              sha="${head}"
+              reason="head is the latest security-validated revision"
+            else
+              comparison=$(gh api "repos/${REPO}/compare/${validated}...${head}" \
+                --jq '{status: .status, files: [.files[].filename]}')
+              cmp_status=$(printf '%s' "${comparison}" | jq -r '.status')
+              non_data=$(printf '%s' "${comparison}" | jq -r '[.files[] | select(. != "data/status.json")] | length')
+
+              if [[ "${cmp_status}" == "ahead" && "${non_data}" -eq 0 ]]; then
+                deploy=true
+                sha="${head}"
+                reason="head differs from the validated revision only by data/status.json"
+              else
+                reason="unvalidated changes since ${validated} (status=${cmp_status}, non-data files=${non_data})"
+              fi
+            fi
+          fi
+
+          # Best-effort duplicate guard: skip a revision that already deployed.
+          if [[ "${deploy}" == "true" ]]; then
+            already=$(gh api \
+              "repos/${REPO}/actions/workflows/deploy-pages.yml/runs?head_sha=${sha}&per_page=30" \
+              --jq '[.workflow_runs[] | select(.status == "completed" and .conclusion == "success")] | length')
+            if [[ "${already}" -gt 0 ]]; then
+              deploy=false
+              sha=""
+              reason="revision was already deployed"
+            fi
+          fi
+
+          echo "deploy=${deploy}" >> "${GITHUB_OUTPUT}"
+          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
+          echo "reason=${reason}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "### Deployment gate"
+            echo ""
+            echo "- Trigger: \`${TRIGGER_WORKFLOW}\` (${TRIGGER_CONCLUSION}) on \`${TRIGGER_BRANCH}\`"
+            echo "- Main head: \`${head}\`"
+            echo "- Decision: **${deploy}** — ${reason}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   deploy:
     name: Deploy static site to GitHub Pages
+    needs: gate
+    if: needs.gate.outputs.deploy == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -24,10 +136,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out repository
+      - name: Check out validated revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.gate.outputs.sha }}
           persist-credentials: false
+
+      - name: Verify checked-out revision
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ needs.gate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          actual=$(git rev-parse HEAD)
+          if [[ "${actual}" != "${EXPECTED_SHA}" ]]; then
+            echo "::error::Checked-out revision ${actual} does not match validated revision ${EXPECTED_SHA}"
+            exit 1
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4

@@ -1,0 +1,8 @@
+{
+  "name": "athmetry-system-status",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}
