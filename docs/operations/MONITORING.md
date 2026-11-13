@@ -146,6 +146,42 @@ Status data unchanged; skipping commit.
 
 ---
 
+## Production Event-Driven Collector Verification
+
+Use this procedure to verify the Backend event-driven collector without changing
+application code or manually editing production status data:
+
+1. Confirm the Backend reporter wrote the event to
+   `data/status-events/backend.json` and pushed it to `main`.
+2. Confirm the push triggered **Collect System Status**. The 30-minute
+   scheduled collector remains the fallback, and `workflow_dispatch` is
+   available for controlled recovery or verification.
+3. After the collector completes, inspect the run logs and the resulting
+   `data/status.json` commit on `main`. Confirm the Backend event was accepted,
+   the Backend workflow and successful history were updated, and the Frontend
+   and System Status entries were preserved.
+4. Confirm the subsequent quality-gated **Deploy to GitHub Pages** run used
+   the validated revision and completed successfully.
+5. Open the live dashboard and use **Manual Refresh** to fetch the newly
+   published `data/status.json`. Manual Refresh only fetches the published
+   snapshot; it does not execute the collector.
+
+### Current Verification Case
+
+The existing Backend event records Backend Validation run **#38**:
+
+- Run ID: `43517315540`
+- Attempt: `1`
+- Commit: `6cb7d54feef69089b06504eb033cd5c7c44541c7`
+- Conclusion: `success`
+
+Expected result: the published Backend Validation latest run becomes run #38
+with its successful status and job details. Existing Backend history and the
+latest successful build remain intact, and the Frontend and System Status
+repository entries remain unaffected.
+
+---
+
 ## Data Freshness Monitoring
 
 The frontend automatically shows a "Stale data" alert when:
