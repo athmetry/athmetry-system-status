@@ -2714,6 +2714,57 @@ body.modal-open {
 }
 
 /* ---------------------------------------------------------------------------
+   Live refresh indicator
+   --------------------------------------------------------------------------- */
+.live-refresh-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.live-refresh-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.live-refresh-updated {
+  color: var(--color-success);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.live-refresh-failed {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.live-refresh-time {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 767px) {
+  .live-refresh-indicator {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  .live-refresh-time {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Print
    --------------------------------------------------------------------------- */
 @media print {

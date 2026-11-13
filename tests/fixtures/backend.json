@@ -1,0 +1,49 @@
+{
+  "payload": {
+    "repository": "athmetry/athmetry-backend",
+    "displayName": "Backend",
+    "product": "ATHMETRY-WEB",
+    "branch": "main",
+    "commit": {
+      "sha": "a75dca316d3235318f832222d66ec222d8b950d3",
+      "message": "feat(auth): implement password recovery and management",
+      "author": "mdtausif1"
+    },
+    "workflow": {
+      "name": "Athmetry Backend Validation",
+      "runId": 43098606454,
+      "runNumber": 16,
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606454",
+      "status": "completed",
+      "conclusion": "success",
+      "effectiveStatus": "success",
+      "eventType": "push",
+      "triggeredAt": "2026-11-12T10:22:56Z",
+      "completedAt": "2026-11-12T10:25:14Z",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-12T10:23:00Z",
+          "completed_at": "2026-11-12T10:25:10Z"
+        },
+        {
+          "name": "test",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-12T10:23:15Z",
+          "completed_at": "2026-11-12T10:25:00Z"
+        }
+      ]
+    },
+    "reportedAt": "2026-11-12T10:25:15Z",
+    "source": "workflow_run"
+  },
+  "meta": {
+    "reportedAt": "2026-11-12T10:25:15Z",
+    "sourceRunId": 43098606454,
+    "sourceRunAttempt": 1,
+    "version": 1
+  }
+}

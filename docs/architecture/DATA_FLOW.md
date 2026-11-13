@@ -12,6 +12,90 @@ This document describes the complete data lifecycle from GitHub Actions workflow
 
 The collector script (`.github/scripts/collect-status.sh`) calls the GitHub REST API via `gh` CLI:
 
+### Backend Status Event Consumption
+
+In addition to polling GitHub APIs, the collector can consume status events pushed by the Backend repository's GitHub Actions workflow. This provides faster, more reliable status updates for the Backend pipeline.
+
+**Event File**: `data/status-events/backend.json` (written by Backend's status reporter)
+
+**Event Structure**:
+```json
+{
+  "payload": {
+    "repository": "athmetry-backend",
+    "displayName": "Athmetry Backend",
+    "product": "ATHMETRY-WEB",
+    "branch": "main",
+    "commit": {
+      "sha": "<commit-sha>",
+      "message": "<commit-message>",
+      "author": "<author-name>"
+    },
+    "workflow": {
+      "id": 12345678,
+      "name": "CI",
+      "path": ".github/workflows/ci.yml",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-12T10:22:56Z",
+      "completedAt": "2026-11-12T10:25:14Z",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-12T10:23:00Z",
+          "completed_at": "2026-11-12T10:25:10Z"
+        }
+      ],
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43098606454",
+      "runNumber": 16
+    },
+    "reportedAt": "2026-11-12T10:25:15Z",
+    "source": "github-actions"
+  },
+  "meta": {
+    "reportedAt": "2026-11-12T10:25:15Z",
+    "sourceRunId": "43098606454",
+    "sourceRunAttempt": 1,
+    "version": 1
+  }
+}
+```
+
+**Validation Rules** (all must pass for event to be accepted):
+
+| Field | Expected Value | Action on Mismatch |
+|-------|----------------|-------------------|
+| `payload.repository` | `athmetry-backend` | Reject event, log error |
+| `payload.product` | `ATHMETRY-WEB` | Reject event, log error |
+| `payload.branch` | `main` | Reject event, log error |
+| `meta.sourceRunId` | Positive integer | Reject event, log error |
+| `meta.sourceRunAttempt` | Positive integer | Reject event, log error |
+| JSON syntax | Valid JSON | Reject event, log error |
+| Top-level structure | Has `payload` and `meta` | Reject event, log error |
+
+**Freshness Comparison**:
+
+The collector compares the event's `sourceRunId` and `sourceRunAttempt` against the existing Backend data:
+
+| Comparison | Action |
+|------------|--------|
+| Event run ID < existing latest run ID | Preserve existing data (event is stale) |
+| Event run ID == existing run ID AND event attempt <= existing attempt | Preserve existing data (event not newer) |
+| Event run ID == existing run ID AND event attempt > existing attempt | Update with event data (re-run) |
+| Event run ID > existing latest run ID | Update with event data (newer run) |
+
+If no Backend event file exists, or validation fails, the collector falls back to its standard GitHub API polling for the Backend repository. This ensures the dashboard always shows data even if the event mechanism is unavailable.
+
+**Frontend/System Status**: These repositories continue to use GitHub API polling; only the Backend repository consumes the pushed event.
+
+---
+
+### Source APIs
+
+The collector script (`.github/scripts/collect-status.sh`) calls the GitHub REST API via `gh` CLI:
+
 | API Endpoint | Purpose | Parameters |
 |--------------|---------|------------|
 | `GET /repos/{owner}/{repo}/actions/workflows` | Discover all workflows for the repository | — |

@@ -408,6 +408,41 @@ export async function renderDashboard(data) {
 
   // Check for errors and show alerts
   checkAndShowAlerts(data);
+
+  // Show live refresh indicator if present
+  if (data.liveRefreshMeta) {
+    renderLiveRefreshIndicator(data.liveRefreshMeta);
+  }
+}
+
+/** Render live refresh indicator showing which repos have live data. */
+function renderLiveRefreshIndicator(meta) {
+  const existing = document.getElementById('live-refresh-indicator');
+  if (existing) existing.remove();
+
+  const indicator = document.createElement('div');
+  indicator.id = 'live-refresh-indicator';
+  indicator.className = 'live-refresh-indicator';
+  
+  const updated = meta.updatedRepos.length > 0
+    ? `Live: ${meta.updatedRepos.map(r => r.replace('athmetry-', '')).join(', ')}`
+    : 'Live: none';
+  const failed = meta.failedRepos.length > 0
+    ? `Cached: ${meta.failedRepos.map(r => r.replace('athmetry-', '')).join(', ')}`
+    : 'Cached: none';
+  
+  indicator.innerHTML = `
+    <span class="live-refresh-label">Manual Refresh</span>
+    <span class="live-refresh-updated" title="Repositories with live data from GitHub API">${updated}</span>
+    <span class="live-refresh-failed" title="Repositories using cached collector data (private or inaccessible)">${failed}</span>
+    <span class="live-refresh-time">${formatRelativeTime(meta.timestamp)}</span>
+  `;
+  
+  // Insert after the overall status card
+  const overallCard = document.querySelector('.overall-card');
+  if (overallCard && overallCard.parentNode) {
+    overallCard.parentNode.insertBefore(indicator, overallCard.nextSibling);
+  }
 }
 
 /** Render overall system status. */

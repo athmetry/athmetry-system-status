@@ -138,8 +138,9 @@ async function handleManualRefresh() {
   }
 
   try {
-    // Fetch fresh published status data via the existing API mechanism
-    const data = await statusApi.fetchStatus();
+    // Fetch live status data from GitHub API where possible
+    // Falls back to published data for private/inaccessible repos
+    const data = await statusApi.fetchLiveStatus();
     // Update the dashboard with the fetched data (no full-page reload)
     await renderDashboard(data);
     updateLastUpdatedNow();
