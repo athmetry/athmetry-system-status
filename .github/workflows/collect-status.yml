@@ -3,7 +3,7 @@ name: Collect System Status
 on:
   schedule:
     # Run automatically every 30 minutes as a fallback.
-    - cron: '*/30 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     # Allow manual execution.
   push:
