@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'data/status-events/backend.json'
+      - 'data/status-events/frontend.json'
 
 permissions:
   contents: write

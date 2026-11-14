@@ -914,6 +914,89 @@ main() {
     log "INFO" "No valid Backend event found, using API-collected data only"
   fi
 
+  # Try to consume and merge Frontend event with stale-event protection
+  local frontend_event_json
+  if [[ -f "data/status-events/frontend.json" ]] && frontend_event_json=$(cat "data/status-events/frontend.json" 2>/dev/null) && printf '%s' "$frontend_event_json" | jq empty 2>/dev/null; then
+    log "INFO" "Found Frontend event file, attempting to merge"
+    # Basic validation: check for required fields
+    local has_payload has_meta
+    has_payload=$(printf '%s' "$frontend_event_json" | jq -e 'has("payload")' >/dev/null 2>&1 && echo true || echo false)
+    has_meta=$(printf '%s' "$frontend_event_json" | jq -e 'has("meta")' >/dev/null 2>&1 && echo true || echo false)
+    if [[ "$has_payload" == "true" ]] && [[ "$has_meta" == "true" ]]; then
+      # Extract run ID and attempt from the frontend event metadata
+      local event_run_id event_run_attempt
+      event_run_id=$(printf '%s' "$frontend_event_json" | jq -r '.meta.sourceRunId // ""')
+      event_run_attempt=$(printf '%s' "$frontend_event_json" | jq -r '.meta.sourceRunAttempt // ""')
+
+      # Validate run ID and attempt are positive integers
+      if [[ -z "$event_run_id" ]] || [[ "$event_run_id" == "null" ]]; then
+        log "ERROR" "Frontend event missing meta.sourceRunId"
+      elif ! validate_positive_integer "$event_run_id"; then
+        log "ERROR" "Frontend event meta.sourceRunId is not a valid positive integer: $event_run_id"
+      elif [[ -z "$event_run_attempt" ]] || [[ "$event_run_attempt" == "null" ]]; then
+        log "ERROR" "Frontend event missing meta.sourceRunAttempt"
+      elif ! validate_positive_integer "$event_run_attempt"; then
+        log "ERROR" "Frontend event meta.sourceRunAttempt is not a valid positive integer: $event_run_attempt"
+      else
+        # Find existing Frontend repo's latest run ID and attempt
+        local existing_frontend_latest_run_id existing_frontend_latest_run_attempt
+        existing_frontend_latest_run_id=$(printf '%s' "$entries" | jq -r '.[] | select(.name == "athmetry-frontend") | .workflows[0].latestRun.runId // 0')
+        existing_frontend_latest_run_attempt=$(printf '%s' "$entries" | jq -r '.[] | select(.name == "athmetry-frontend") | .workflows[0].latestRun.runAttempt // 0')
+
+        # Perform stale-event protection and merge in a single jq operation
+        merged_entries=$(printf '%s' "$entries" | jq --argjson event "$frontend_event_json" --arg existing_run_id "$existing_frontend_latest_run_id" --arg existing_run_attempt "$existing_frontend_latest_run_attempt" '
+          # Find the Frontend repo entry by name, apply stale protection and merge
+          map(
+            if .name == "athmetry-frontend" then
+              # If existing data is newer (higher run ID, or same run ID with higher/equal attempt), preserve it unchanged
+              if ($existing_run_id | tonumber) > ($event | .meta.sourceRunId | tonumber) then
+                . + { error: "stale_preserve" }
+              elif ($existing_run_id | tonumber) == ($event | .meta.sourceRunId | tonumber) and ($existing_run_attempt | tonumber) >= ($event | .meta.sourceRunAttempt | tonumber) then
+                . + { error: "stale_preserve" }
+              else
+                # New event is newer: derive effectiveStatus from event payload and merge
+                . + {
+                  error: null,
+                  overallStatus: (
+                    .payload.workflow.status as $status |
+                    .payload.workflow.conclusion as $conclusion |
+                    if $status == "completed" then
+                      if $conclusion == "success" then "success"
+                      elif $conclusion == "failure" or $conclusion == "action_required" then "failure"
+                      elif $conclusion == "cancelled" then "cancelled"
+                      elif $conclusion == "timed_out" then "failure"
+                      elif $conclusion == "skipped" then "skipped"
+                      else "unknown"
+                      end
+                    elif $status == "in_progress" then "running"
+                    elif $status == "queued" then "queued"
+                    elif $status == "failure" then "failure"
+                    else "unknown"
+                  )
+                }
+              end
+            else
+              .
+            end
+          )
+        ')
+
+        # Check if stale protection preserved existing data
+        if printf '%s' "$merged_entries" | jq -e '.[] | has("error") and .error == "stale_preserve"' >/dev/null 2>&1; then
+          log "INFO" "Frontend event stale-protected: existing data is newer, preserving API-collected data"
+          # Keep existing entries unchanged since event was older
+        else
+          log "INFO" "Frontend event merged successfully (newer than existing data)"
+          entries="$merged_entries"
+        fi
+      fi
+    else
+      log "INFO" "Frontend event missing required fields (payload, meta), using API-collected data only"
+    fi
+  else
+    log "INFO" "No valid Frontend event found, using API-collected data only"
+  fi
+
   # Build the full status document.
   local new_content
   new_content=$(jq -n \
