@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "collectedAt": "2026-11-14T19:50:36Z",
+  "collectedAt": "2026-11-14T21:54:39Z",
   "monitoredBranch": "main",
   "repositories": [
     {
@@ -519,26 +519,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "failure",
-            "runId": 43603214147,
-            "runNumber": 5,
+            "runId": 43645214858,
+            "runNumber": 6,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43603214147",
-            "commitSha": "d07b0e04c5ea202aa0d96f0c3990d9a12a0dc08d",
-            "commitMessage": "feat(frontend): complete auth storefront and pipeline reporting",
+            "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43645214858",
+            "commitSha": "c952fc18bb45e89e8abc2005ba5c5e32ce050446",
+            "commitMessage": "fix(auth): resolve reset password search params boundary",
             "commitAuthor": "mdtausif1",
-            "startedAt": "2026-11-14T14:07:35Z",
-            "completedAt": "2026-11-14T14:08:01Z",
+            "startedAt": "2026-11-14T21:53:53Z",
+            "completedAt": "2026-11-14T21:54:24Z",
             "jobs": [
               {
                 "name": "ci",
                 "status": "completed",
                 "conclusion": "failure",
-                "started_at": "2026-11-14T14:07:37Z",
-                "completed_at": "2026-11-14T14:08:01Z"
+                "started_at": "2026-11-14T21:53:55Z",
+                "completed_at": "2026-11-14T21:54:22Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 6,
+              "status": "completed",
+              "conclusion": "failure",
+              "commitSha": "c952fc18bb45e89e8abc2005ba5c5e32ce050446",
+              "startedAt": "2026-11-14T21:53:53Z",
+              "completedAt": "2026-11-14T21:54:24Z",
+              "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43645214858"
+            },
             {
               "runNumber": 5,
               "status": "completed",
@@ -574,15 +583,6 @@
               "startedAt": "2026-11-08T12:08:25Z",
               "completedAt": "2026-11-08T12:09:16Z",
               "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/42478832938"
-            },
-            {
-              "runNumber": 1,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "01c8fc1d85d09ef71ebcdc8087b9ab2dbbbcd245",
-              "startedAt": "2026-11-08T09:54:02Z",
-              "completedAt": "2026-11-08T09:56:12Z",
-              "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/42469114748"
             }
           ]
         },
@@ -592,11 +592,42 @@
           "path": ".github/workflows/dependency-audit.yml",
           "state": "active",
           "html_url": "https://github.com/athmetry/athmetry-frontend/blob/main/.github/workflows/dependency-audit.yml",
-          "effectiveStatus": "unknown",
-          "latestStatus": "unknown",
-          "latestConclusion": "unknown",
-          "latestRun": null,
-          "history": []
+          "effectiveStatus": "success",
+          "latestStatus": "completed",
+          "latestConclusion": "success",
+          "latestRun": {
+            "status": "completed",
+            "conclusion": "success",
+            "runId": 43642480815,
+            "runNumber": 1,
+            "runAttempt": 1,
+            "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43642480815",
+            "commitSha": "d07b0e04c5ea202aa0d96f0c3990d9a12a0dc08d",
+            "commitMessage": "feat(frontend): complete auth storefront and pipeline reporting",
+            "commitAuthor": "mdtausif1",
+            "startedAt": "2026-11-14T21:22:32Z",
+            "completedAt": "2026-11-14T21:22:52Z",
+            "jobs": [
+              {
+                "name": "pnpm audit (high and critical)",
+                "status": "completed",
+                "conclusion": "success",
+                "started_at": "2026-11-14T21:22:35Z",
+                "completed_at": "2026-11-14T21:22:51Z"
+              }
+            ]
+          },
+          "history": [
+            {
+              "runNumber": 1,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "d07b0e04c5ea202aa0d96f0c3990d9a12a0dc08d",
+              "startedAt": "2026-11-14T21:22:32Z",
+              "completedAt": "2026-11-14T21:22:52Z",
+              "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43642480815"
+            }
+          ]
         },
         {
           "id": 418342973,
@@ -610,26 +641,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 43603257157,
-            "runNumber": 1,
+            "runId": 43645262739,
+            "runNumber": 2,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43603257157",
-            "commitSha": "d07b0e04c5ea202aa0d96f0c3990d9a12a0dc08d",
-            "commitMessage": "feat(frontend): complete auth storefront and pipeline reporting",
+            "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43645262739",
+            "commitSha": "c952fc18bb45e89e8abc2005ba5c5e32ce050446",
+            "commitMessage": "fix(auth): resolve reset password search params boundary",
             "commitAuthor": "mdtausif1",
-            "startedAt": "2026-11-14T14:08:04Z",
-            "completedAt": "2026-11-14T14:08:15Z",
+            "startedAt": "2026-11-14T21:54:26Z",
+            "completedAt": "2026-11-14T21:54:38Z",
             "jobs": [
               {
                 "name": "Report pipeline status to System Status",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-14T14:08:06Z",
-                "completed_at": "2026-11-14T14:08:14Z"
+                "started_at": "2026-11-14T21:54:28Z",
+                "completed_at": "2026-11-14T21:54:37Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 2,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "c952fc18bb45e89e8abc2005ba5c5e32ce050446",
+              "startedAt": "2026-11-14T21:54:26Z",
+              "completedAt": "2026-11-14T21:54:38Z",
+              "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43645262739"
+            },
             {
               "runNumber": 1,
               "status": "completed",
@@ -648,7 +688,7 @@
       "owner": "athmetry",
       "repo": "athmetry-system-status",
       "error": null,
-      "overallStatus": "failure",
+      "overallStatus": "running",
       "workflows": [
         {
           "id": 414992531,
@@ -656,32 +696,41 @@
           "path": ".github/workflows/collect-status.yml",
           "state": "active",
           "html_url": "https://github.com/athmetry/athmetry-system-status/blob/main/.github/workflows/collect-status.yml",
-          "effectiveStatus": "failure",
+          "effectiveStatus": "success",
           "latestStatus": "completed",
-          "latestConclusion": "failure",
+          "latestConclusion": "success",
           "latestRun": {
             "status": "completed",
-            "conclusion": "failure",
-            "runId": 43628935834,
-            "runNumber": 31,
+            "conclusion": "success",
+            "runId": 43634263788,
+            "runNumber": 32,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43628935834",
-            "commitSha": "55d77d44e58c785c2f6808a8171560eae69db022",
-            "commitMessage": "chore(status-event): add frontend pipeline status (run 5)",
-            "commitAuthor": "athmetry",
-            "startedAt": "2026-11-14T18:51:44Z",
-            "completedAt": "2026-11-14T18:52:07Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43634263788",
+            "commitSha": "1eb379761e32fc4f8612a6d9a7fd27a3664aefd6",
+            "commitMessage": "fix(status): complete frontend pipeline event merging",
+            "commitAuthor": "mdtausif1",
+            "startedAt": "2026-11-14T19:50:31Z",
+            "completedAt": "2026-11-14T19:50:56Z",
             "jobs": [
               {
                 "name": "Collect pipeline status",
                 "status": "completed",
-                "conclusion": "failure",
-                "started_at": "2026-11-14T18:51:46Z",
-                "completed_at": "2026-11-14T18:52:07Z"
+                "conclusion": "success",
+                "started_at": "2026-11-14T19:50:34Z",
+                "completed_at": "2026-11-14T19:50:55Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 32,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "1eb379761e32fc4f8612a6d9a7fd27a3664aefd6",
+              "startedAt": "2026-11-14T19:50:31Z",
+              "completedAt": "2026-11-14T19:50:56Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43634263788"
+            },
             {
               "runNumber": 31,
               "status": "completed",
@@ -708,15 +757,6 @@
               "startedAt": "2026-11-14T14:23:54Z",
               "completedAt": "2026-11-14T14:24:17Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43604652974"
-            },
-            {
-              "runNumber": 28,
-              "status": "completed",
-              "conclusion": "failure",
-              "commitSha": "55d77d44e58c785c2f6808a8171560eae69db022",
-              "startedAt": "2026-11-14T14:18:13Z",
-              "completedAt": "2026-11-14T14:18:39Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43604148383"
             }
           ]
         },
@@ -726,39 +766,57 @@
           "path": ".github/workflows/deploy-pages.yml",
           "state": "active",
           "html_url": "https://github.com/athmetry/athmetry-system-status/blob/main/.github/workflows/deploy-pages.yml",
-          "effectiveStatus": "success",
-          "latestStatus": "completed",
-          "latestConclusion": "success",
+          "effectiveStatus": "running",
+          "latestStatus": "in_progress",
+          "latestConclusion": "unknown",
           "latestRun": {
-            "status": "completed",
-            "conclusion": "success",
-            "runId": 43634241065,
-            "runNumber": 42,
+            "status": "in_progress",
+            "conclusion": "unknown",
+            "runId": 43645289564,
+            "runNumber": 44,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43634241065",
-            "commitSha": "1eb379761e32fc4f8612a6d9a7fd27a3664aefd6",
-            "commitMessage": "fix(status): complete frontend pipeline event merging",
-            "commitAuthor": "mdtausif1",
-            "startedAt": "2026-11-14T19:50:17Z",
-            "completedAt": "2026-11-14T19:50:43Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43645289564",
+            "commitSha": "99a17edf190c1d809cdb36165e5a5f59f3dea18b",
+            "commitMessage": "chore(status-event): update frontend pipeline status (run 6)",
+            "commitAuthor": "athmetry",
+            "startedAt": "2026-11-14T21:54:45Z",
+            "completedAt": "2026-11-14T21:54:56Z",
             "jobs": [
               {
                 "name": "Verify deployment gate",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-14T19:50:19Z",
-                "completed_at": "2026-11-14T19:50:25Z"
+                "started_at": "2026-11-14T21:54:47Z",
+                "completed_at": "2026-11-14T21:54:51Z"
               },
               {
                 "name": "Deploy static site to GitHub Pages",
-                "status": "completed",
-                "conclusion": "success",
-                "started_at": "2026-11-14T19:50:29Z",
-                "completed_at": "2026-11-14T19:50:42Z"
+                "status": "in_progress",
+                "conclusion": null,
+                "started_at": "2026-11-14T21:54:55Z",
+                "completed_at": null
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 44,
+              "status": "in_progress",
+              "conclusion": null,
+              "commitSha": "99a17edf190c1d809cdb36165e5a5f59f3dea18b",
+              "startedAt": "2026-11-14T21:54:45Z",
+              "completedAt": "2026-11-14T21:54:56Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43645289564"
+            },
+            {
+              "runNumber": 43,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "b6213367c237e949bf06ae80d1d80fe2299f59b3",
+              "startedAt": "2026-11-14T19:50:58Z",
+              "completedAt": "2026-11-14T19:51:23Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43634305827"
+            },
             {
               "runNumber": 42,
               "status": "completed",
@@ -785,24 +843,6 @@
               "startedAt": "2026-11-14T17:50:13Z",
               "completedAt": "2026-11-14T17:50:19Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43623250613"
-            },
-            {
-              "runNumber": 39,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "55d77d44e58c785c2f6808a8171560eae69db022",
-              "startedAt": "2026-11-14T14:24:19Z",
-              "completedAt": "2026-11-14T14:24:24Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43604687917"
-            },
-            {
-              "runNumber": 38,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "55d77d44e58c785c2f6808a8171560eae69db022",
-              "startedAt": "2026-11-14T14:18:42Z",
-              "completedAt": "2026-11-14T14:18:46Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43604189331"
             }
           ]
         },
@@ -818,26 +858,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 43634220714,
-            "runNumber": 11,
+            "runId": 43645274854,
+            "runNumber": 12,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43634220714",
-            "commitSha": "1eb379761e32fc4f8612a6d9a7fd27a3664aefd6",
-            "commitMessage": "fix(status): complete frontend pipeline event merging",
-            "commitAuthor": "mdtausif1",
-            "startedAt": "2026-11-14T19:50:04Z",
-            "completedAt": "2026-11-14T19:50:14Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43645274854",
+            "commitSha": "99a17edf190c1d809cdb36165e5a5f59f3dea18b",
+            "commitMessage": "chore(status-event): update frontend pipeline status (run 6)",
+            "commitAuthor": "athmetry",
+            "startedAt": "2026-11-14T21:54:34Z",
+            "completedAt": "2026-11-14T21:54:43Z",
             "jobs": [
               {
                 "name": "Scan for secrets and workflow misconfigurations",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-14T19:50:06Z",
-                "completed_at": "2026-11-14T19:50:13Z"
+                "started_at": "2026-11-14T21:54:36Z",
+                "completed_at": "2026-11-14T21:54:43Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 12,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "99a17edf190c1d809cdb36165e5a5f59f3dea18b",
+              "startedAt": "2026-11-14T21:54:34Z",
+              "completedAt": "2026-11-14T21:54:43Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43645274854"
+            },
             {
               "runNumber": 11,
               "status": "completed",
@@ -873,15 +922,6 @@
               "startedAt": "2026-11-13T23:59:06Z",
               "completedAt": "2026-11-13T23:59:24Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43531030856"
-            },
-            {
-              "runNumber": 7,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "879e3ea1b23e78bdc52a75fc45140eee3db13e38",
-              "startedAt": "2026-11-13T23:47:10Z",
-              "completedAt": "2026-11-13T23:47:24Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43529673493"
             }
           ]
         }
