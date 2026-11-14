@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "c952fc18bb45e89e8abc2005ba5c5e32ce050446",
-      "message": "fix(auth): resolve reset password search params boundary",
+      "sha": "2d9a11cd785a5ae8966193c20826f99919394ef1",
+      "message": "fix(frontend): commit missing application dependencies",
       "author": "mdtausif1"
     },
     "workflow": {
       "name": "Athmetry Frontend CI",
-      "runId": 43645214858,
-      "runNumber": 6,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43645214858",
+      "runId": 43650456959,
+      "runNumber": 7,
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43650456959",
       "status": "completed",
-      "conclusion": "failure",
-      "effectiveStatus": "failure",
+      "conclusion": "success",
+      "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-14T21:53:53Z",
-      "completedAt": "2026-11-14T21:54:24Z",
+      "triggeredAt": "2026-11-14T22:53:50Z",
+      "completedAt": "2026-11-14T22:54:56Z",
       "jobs": [
         {
-          "completed_at": "2026-11-14T21:54:22Z",
-          "conclusion": "failure",
+          "completed_at": "2026-11-14T22:54:55Z",
+          "conclusion": "success",
           "name": "ci",
-          "started_at": "2026-11-14T21:53:55Z",
+          "started_at": "2026-11-14T22:53:52Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-14T21:54:31Z",
+    "reportedAt": "2026-11-14T22:55:04Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-14T21:54:32Z",
-    "sourceRunId": 43645214858,
+    "reportedAt": "2026-11-14T22:55:05Z",
+    "sourceRunId": 43650456959,
     "sourceRunAttempt": 1,
     "version": 1
   }
