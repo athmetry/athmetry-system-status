@@ -20,7 +20,7 @@ ruby -ryaml -e '
 
   push = triggers.fetch("push")
   abort "push must be restricted to main" unless push["branches"] == ["main"]
-  abort "push path must be the Backend event only" unless push["paths"] == ["data/status-events/backend.json"]
+  abort "push path must include backend and frontend events" unless push["paths"] == ["data/status-events/backend.json", "data/status-events/frontend.json"]
   abort "data/status.json must not trigger collection" if push.fetch("paths", []).include?("data/status.json")
 
   concurrency = workflow.fetch("concurrency")
@@ -30,6 +30,6 @@ ruby -ryaml -e '
   abort "collector permissions changed" unless workflow.fetch("permissions") == {"contents" => "write"}
 ' "${WORKFLOW_FILE}"
 
-echo "✓ PASS: Collector triggers are schedule, workflow_dispatch, and Backend-event push only"
-echo "✓ PASS: Push trigger is restricted to main and data/status-events/backend.json"
+echo "✓ PASS: Collector triggers are schedule, workflow_dispatch, and Backend/Frontend-event push only"
+echo "✓ PASS: Push trigger is restricted to main and data/status-events/backend.json, data/status-events/frontend.json"
 echo "✓ PASS: 30-minute schedule, concurrency, and permissions are preserved"

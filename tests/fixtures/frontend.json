@@ -1,0 +1,42 @@
+{
+  "payload": {
+    "repository": "athmetry/athmetry-frontend",
+    "displayName": "Frontend",
+    "product": "ATHMETRY-WEB",
+    "branch": "main",
+    "commit": {
+      "sha": "d07b0e04c5ea202aa0d96f0c3990d9a12a0dc08d",
+      "message": "feat(frontend): complete auth storefront and pipeline reporting",
+      "author": "mdtausif1"
+    },
+    "workflow": {
+      "name": "Athmetry Frontend CI",
+      "runId": 43603214147,
+      "runNumber": 5,
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43603214147",
+      "status": "completed",
+      "conclusion": "success",
+      "effectiveStatus": "success",
+      "eventType": "push",
+      "triggeredAt": "2026-11-14T14:07:35Z",
+      "completedAt": "2026-11-14T14:08:01Z",
+      "jobs": [
+        {
+          "name": "ci",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-14T14:07:37Z",
+          "completed_at": "2026-11-14T14:08:01Z"
+        }
+      ]
+    },
+    "reportedAt": "2026-11-14T14:08:09Z",
+    "source": "workflow_run"
+  },
+  "meta": {
+    "reportedAt": "2026-11-14T14:08:09Z",
+    "sourceRunId": 43603214147,
+    "sourceRunAttempt": 1,
+    "version": 1
+  }
+}
