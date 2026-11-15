@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "6cb7d54feef69089b06504eb033cd5c7c44541c7",
-      "message": "ci(codeql): run analysis weekly and on demand",
+      "sha": "c9b9821bd24dd282863b9578eb287d6113604f16",
+      "message": "Phase 1: Supabase/Vercel readiness — bounded pool, V10, Flyway SSL",
       "author": "mdtausif1"
     },
     "workflow": {
       "name": "Athmetry Backend Validation",
-      "runId": 43517315540,
-      "runNumber": 38,
-      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43517315540",
+      "runId": 43763082219,
+      "runNumber": 39,
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/43763082219",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-13T22:12:13Z",
-      "completedAt": "2026-11-13T22:13:33Z",
+      "triggeredAt": "2026-11-15T21:19:56Z",
+      "completedAt": "2026-11-15T21:21:21Z",
       "jobs": [
         {
-          "completed_at": "2026-11-13T22:13:32Z",
+          "completed_at": "2026-11-15T21:21:21Z",
           "conclusion": "success",
           "name": "Lint, typecheck, test and build",
-          "started_at": "2026-11-13T22:12:16Z",
+          "started_at": "2026-11-15T21:19:59Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-13T22:13:43Z",
+    "reportedAt": "2026-11-15T21:21:30Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-13T22:13:44Z",
-    "sourceRunId": 43517315540,
+    "reportedAt": "2026-11-15T21:21:31Z",
+    "sourceRunId": 43763082219,
     "sourceRunAttempt": 1,
     "version": 1
   }
