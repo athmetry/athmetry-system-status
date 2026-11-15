@@ -5,7 +5,8 @@
 set -uo pipefail
 
 # Source the production collector functions (without running main)
-source /Users/tausif/Documents/Projects/athmetry/athmetry-system-status/.github/scripts/collect-status.sh
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/.github/scripts/collect-status.sh"
 
 # Set up isolated temporary directory
 TEMP_DIR="$(mktemp -d)"
@@ -13,7 +14,7 @@ export TEMP_DIR
 trap 'rm -rf "${TEMP_DIR}"' EXIT
 
 # Set the FRONTEND_EVENT_FILE to the test fixture path for the main tests
-export FRONTEND_EVENT_FILE="/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/frontend.json"
+export FRONTEND_EVENT_FILE="${REPO_ROOT}/tests/fixtures/frontend.json"
 
 # Test helper functions
 check_error_output() {

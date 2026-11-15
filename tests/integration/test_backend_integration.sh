@@ -5,10 +5,11 @@
 set -uo pipefail
 
 # Source the production collector functions (without running main)
-source /Users/tausif/Documents/Projects/athmetry/athmetry-system-status/.github/scripts/collect-status.sh
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "${REPO_ROOT}/.github/scripts/collect-status.sh"
 
 # Set the EVENT_FILE to the test fixture path for the main tests
-export EVENT_FILE="/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json"
+export EVENT_FILE="${REPO_ROOT}/tests/fixtures/backend.json"
 
 # Test helper functions
 check_error_output() {
