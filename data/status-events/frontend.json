@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "2d9a11cd785a5ae8966193c20826f99919394ef1",
-      "message": "fix(frontend): commit missing application dependencies",
+      "sha": "a60fc3325aa6571bd3115aa2a59f630cae7b69a8",
+      "message": "feat(auth): add complete authentication pages, forms, fields, and middleware",
       "author": "mdtausif1"
     },
     "workflow": {
       "name": "Athmetry Frontend CI",
-      "runId": 43650456959,
-      "runNumber": 7,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43650456959",
+      "runId": 43662871721,
+      "runNumber": 8,
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43662871721",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-14T22:53:50Z",
-      "completedAt": "2026-11-14T22:54:56Z",
+      "triggeredAt": "2026-11-15T01:23:29Z",
+      "completedAt": "2026-11-15T01:24:58Z",
       "jobs": [
         {
-          "completed_at": "2026-11-14T22:54:55Z",
+          "completed_at": "2026-11-15T01:24:58Z",
           "conclusion": "success",
           "name": "ci",
-          "started_at": "2026-11-14T22:53:52Z",
+          "started_at": "2026-11-15T01:23:31Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-14T22:55:04Z",
+    "reportedAt": "2026-11-15T01:25:05Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-14T22:55:05Z",
-    "sourceRunId": 43650456959,
+    "reportedAt": "2026-11-15T01:25:06Z",
+    "sourceRunId": 43662871721,
     "sourceRunAttempt": 1,
     "version": 1
   }
