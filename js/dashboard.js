@@ -82,6 +82,19 @@ const REPO_DISPLAY_NAMES = {
 // Utility functions
 // ============================================================================
 
+/**
+ * Get workflows to display for a repository.
+ * For athmetry-system-status, excludes the Deploy to GitHub Pages workflow.
+ * @param {object} repo - Repository data
+ * @returns {Array} - Filtered workflows array
+ */
+export function getDisplayWorkflows(repo) {
+  if (repo.name !== 'athmetry-system-status') {
+    return repo.workflows || [];
+  }
+  return (repo.workflows || []).filter(wf => wf.name !== 'Deploy to GitHub Pages');
+}
+
 /** Format an ISO timestamp as a human-readable date/time. */
 function formatDateTime(isoString) {
   if (!isoString) return '—';
@@ -445,6 +458,31 @@ function renderLiveRefreshIndicator(meta) {
   }
 }
 
+/** Calculate overall status from a list of workflows. */
+export function calculateOverallStatus(workflows) {
+  let hasFailure = false;
+  let hasRunning = false;
+  let hasData = false;
+
+  workflows.forEach(wf => {
+    const effStatus = wf.effectiveStatus;
+    if (effStatus === 'failure') {
+      hasFailure = true;
+      hasData = true;
+    } else if (effStatus === 'running' || effStatus === 'queued') {
+      hasRunning = true;
+      hasData = true;
+    } else if (effStatus === 'success') {
+      hasData = true;
+    }
+  });
+
+  if (hasFailure) return 'failure';
+  if (hasRunning) return 'running';
+  if (hasData) return 'success';
+  return 'unknown';
+}
+
 /** Render overall system status. */
 function renderOverallStatus(data) {
   const pill = document.getElementById('overall-status-pill');
@@ -453,6 +491,7 @@ function renderOverallStatus(data) {
   const lastBuildEl = document.getElementById('last-successful-build');
 
   // Determine overall status from all repositories
+  // For system-status repo, use filtered workflows (excluding Deploy to GitHub Pages)
   let overallStatus = 'unknown';
   let hasFailure = false;
   let hasRunning = false;
@@ -465,18 +504,26 @@ function renderOverallStatus(data) {
       hasData = true;
       return;
     }
-    if (repo.overallStatus === 'failure') {
+    
+    // Use filtered workflows for system-status repo
+    const workflows = repo.name === 'athmetry-system-status' 
+      ? getDisplayWorkflows(repo)
+      : (repo.workflows || []);
+    
+    const repoStatus = calculateOverallStatus(workflows);
+    
+    if (repoStatus === 'failure') {
       hasFailure = true;
       hasData = true;
-    } else if (repo.overallStatus === 'running') {
+    } else if (repoStatus === 'running') {
       hasRunning = true;
       hasData = true;
-    } else if (repo.overallStatus === 'success') {
+    } else if (repoStatus === 'success') {
       hasData = true;
     }
 
     // Find latest successful build time
-    repo.workflows?.forEach(wf => {
+    workflows.forEach(wf => {
       if (wf.latestRun && wf.latestConclusion === 'success' && wf.latestRun.completedAt) {
         const time = new Date(wf.latestRun.completedAt).getTime();
         if (!latestSuccessTime || time > latestSuccessTime) {
@@ -529,19 +576,22 @@ function renderRepositoryPipelines(repo, repoKey, monitoredBranch) {
 
   if (!listEl) return;
 
-  // Update repo overall status
+  // Get workflows to display (filtered for system-status)
+  const displayWorkflows = getDisplayWorkflows(repo);
+
+  // Update repo overall status based on filtered workflows
   if (overallPill && overallText) {
-    overallPill.className = `status-pill status-${getStatusClass(repo.overallStatus)} repo-overall-pill`;
-    overallText.textContent = getStatusLabel(repo.overallStatus);
+    const displayStatus = calculateOverallStatus(displayWorkflows);
+    overallPill.className = `status-pill status-${getStatusClass(displayStatus)} repo-overall-pill`;
+    overallText.textContent = getStatusLabel(displayStatus);
   }
 
-  // Update pipeline count
-  const workflows = repo.workflows || [];
-  if (countEl) countEl.textContent = workflows.length;
+  // Update pipeline count based on filtered workflows
+  if (countEl) countEl.textContent = displayWorkflows.length;
 
   // Update repo meta (pipeline count + branch)
   if (repoMetaEl) {
-    const pipelineCount = workflows.length;
+    const pipelineCount = displayWorkflows.length;
     const branch = monitoredBranch || 'main';
     const pipelineText = pipelineCount === 1 ? '1 pipeline' : `${pipelineCount} pipelines`;
     repoMetaEl.textContent = `${pipelineText} · ${branch} branch`;
@@ -550,12 +600,12 @@ function renderRepositoryPipelines(repo, repoKey, monitoredBranch) {
   // Render pipelines
   listEl.innerHTML = '';
 
-  if (workflows.length === 0) {
+  if (displayWorkflows.length === 0) {
     listEl.innerHTML = '<div class="pipeline-empty">No active pipelines found</div>';
     return;
   }
 
-  workflows.forEach(workflow => {
+  displayWorkflows.forEach(workflow => {
     const row = createPipelineRow(workflow, repo.name);
     listEl.appendChild(row);
   });
