@@ -45,7 +45,7 @@ main() {
     # Test 2: Invalid commit SHA rejected
     echo ""
     echo "Test 2: Invalid commit SHA rejected"
-    INVALID_SHA_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.commit.sha = "invalid"')
+    INVALID_SHA_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.commit.sha = "invalid"')
     echo "$INVALID_SHA_EVENT" > /tmp/invalid_sha.json
     if check_error_output "/tmp/invalid_sha.json" "ERROR.*commit SHA is invalid"; then
         echo "✓ PASS: Invalid commit SHA rejected"
@@ -58,7 +58,7 @@ main() {
     # Test 3: Invalid workflow URL rejected
     echo ""
     echo "Test 3: Invalid workflow URL rejected"
-    INVALID_URL_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.workflow.runUrl = "https://example.com/invalid"')
+    INVALID_URL_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.workflow.runUrl = "https://example.com/invalid"')
     echo "$INVALID_URL_EVENT" > /tmp/invalid_url.json
     if check_error_output "/tmp/invalid_url.json" "ERROR.*workflow run URL is invalid"; then
         echo "✓ PASS: Invalid workflow URL rejected"
@@ -71,7 +71,7 @@ main() {
     # Test 4: Wrong repository rejected
     echo ""
     echo "Test 4: Wrong repository rejected"
-    WRONG_REPO_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.repository = "wrong-repo"')
+    WRONG_REPO_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.repository = "wrong-repo"')
     echo "$WRONG_REPO_EVENT" > /tmp/wrong_repo.json
     if check_error_output "/tmp/wrong_repo.json" "ERROR.*repository mismatch"; then
         echo "✓ PASS: Wrong repository rejected"
@@ -84,7 +84,7 @@ main() {
     # Test 5: Wrong product rejected
     echo ""
     echo "Test 5: Wrong product rejected"
-    WRONG_PRODUCT_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.product = "WRONG-PRODUCT"')
+    WRONG_PRODUCT_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.product = "WRONG-PRODUCT"')
     echo "$WRONG_PRODUCT_EVENT" > /tmp/wrong_product.json
     if check_error_output "/tmp/wrong_product.json" "ERROR.*product mismatch"; then
         echo "✓ PASS: Wrong product rejected"
@@ -97,7 +97,7 @@ main() {
     # Test 6: Wrong branch rejected
     echo ""
     echo "Test 6: Wrong branch rejected"
-    WRONG_BRANCH_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.branch = "develop"')
+    WRONG_BRANCH_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.branch = "develop"')
     echo "$WRONG_BRANCH_EVENT" > /tmp/wrong_branch.json
     if check_error_output "/tmp/wrong_branch.json" "ERROR.*branch mismatch"; then
         echo "✓ PASS: Wrong branch rejected"
@@ -110,7 +110,7 @@ main() {
     # Test 7: Missing meta.sourceRunId rejected
     echo ""
     echo "Test 7: Missing meta.sourceRunId rejected"
-    MISSING_RUNID_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq 'del(.meta.sourceRunId)')
+    MISSING_RUNID_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq 'del(.meta.sourceRunId)')
     echo "$MISSING_RUNID_EVENT" > /tmp/missing_runid.json
     if check_error_output "/tmp/missing_runid.json" "ERROR.*missing meta.sourceRunId"; then
         echo "✓ PASS: Missing meta.sourceRunId rejected"
@@ -123,7 +123,7 @@ main() {
     # Test 8: Missing meta.sourceRunAttempt rejected
     echo ""
     echo "Test 8: Missing meta.sourceRunAttempt rejected"
-    MISSING_ATTEMPT_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq 'del(.meta.sourceRunAttempt)')
+    MISSING_ATTEMPT_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq 'del(.meta.sourceRunAttempt)')
     echo "$MISSING_ATTEMPT_EVENT" > /tmp/missing_attempt.json
     if check_error_output "/tmp/missing_attempt.json" "ERROR.*missing meta.sourceRunAttempt"; then
         echo "✓ PASS: Missing meta.sourceRunAttempt rejected"
@@ -171,7 +171,7 @@ main() {
       ]
     }'
 
-    STALE_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.meta.sourceRunId = "43098606454"')
+    STALE_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.meta.sourceRunId = "43098606454"')
     echo "$STALE_EVENT" > /tmp/stale_event.json
 
     MERGED=$(merge_backend_event "$EXISTING_REPO" "$STALE_EVENT")
@@ -186,7 +186,7 @@ main() {
     # Test 10: Duplicate event (same run ID and attempt) rejected
     echo ""
     echo "Test 10: Duplicate event (same run ID and attempt) rejected"
-    DUPLICATE_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json")
+    DUPLICATE_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json")
     echo "$DUPLICATE_EVENT" > /tmp/duplicate_event.json
 
     DUPLICATE_REPO=$(printf '%s' "$EXISTING_REPO" | jq '
@@ -205,7 +205,7 @@ main() {
     # Test 11: Newer run ID accepted
     echo ""
     echo "Test 11: Newer run ID accepted"
-    NEWER_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.meta.sourceRunId = "60000000000" | .payload.workflow.runId = 60000000000 | .payload.workflow.runNumber = 20 | .payload.workflow.runUrl = "https://github.com/athmetry/athmetry-backend/actions/runs/60000000000"')
+    NEWER_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.meta.sourceRunId = "60000000000" | .payload.workflow.runId = 60000000000 | .payload.workflow.runNumber = 20 | .payload.workflow.runUrl = "https://github.com/athmetry/athmetry-backend/actions/runs/60000000000"')
     echo "$NEWER_EVENT" > /tmp/newer_event.json
 
     MERGED=$(merge_backend_event "$EXISTING_REPO" "$NEWER_EVENT")
@@ -258,7 +258,7 @@ main() {
       ]
     }'
 
-    HIGHER_ATTEMPT_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.meta.sourceRunAttempt = 2 | .payload.workflow.conclusion = "success" | .payload.workflow.status = "completed"')
+    HIGHER_ATTEMPT_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.meta.sourceRunAttempt = 2 | .payload.workflow.conclusion = "success" | .payload.workflow.status = "completed"')
     echo "$HIGHER_ATTEMPT_EVENT" > /tmp/higher_attempt.json
 
     MERGED=$(merge_backend_event "$EXISTING_REPO_V2" "$HIGHER_ATTEMPT_EVENT")
@@ -371,7 +371,7 @@ main() {
     # Test 17: Failed event doesn't erase last successful build
     echo ""
     echo "Test 17: Failed event preserves last successful build"
-    FAILED_EVENT=$(cat "/Users/tausif/Documents/Projects/athmetry/athmetry-system-status/tests/fixtures/backend.json" | jq '.payload.workflow.conclusion = "failure" | .payload.workflow.status = "completed" | .meta.sourceRunId = "70000000000" | .payload.workflow.runId = 70000000000 | .payload.workflow.runNumber = 17 | .payload.workflow.runUrl = "https://github.com/athmetry/athmetry-backend/actions/runs/70000000000"')
+    FAILED_EVENT=$(cat "${REPO_ROOT}/tests/fixtures/backend.json" | jq '.payload.workflow.conclusion = "failure" | .payload.workflow.status = "completed" | .meta.sourceRunId = "70000000000" | .payload.workflow.runId = 70000000000 | .payload.workflow.runNumber = 17 | .payload.workflow.runUrl = "https://github.com/athmetry/athmetry-backend/actions/runs/70000000000"')
     echo "$FAILED_EVENT" > /tmp/failed_event.json
 
     MERGED=$(merge_backend_event "$EXISTING_REPO_V2" "$FAILED_EVENT")
