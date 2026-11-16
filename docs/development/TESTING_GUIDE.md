@@ -92,6 +92,8 @@ python3 -m http.server 8000
 | Last collected | Check header | Shows `collectedAt` relative time + absolute time |
 | Last updated | Load page | Header shows "Last updated: just now" (then "a few seconds ago") |
 | Last successful build | Check overall card | Shows the most recent successful workflow completion |
+| Internal reporter visibility | Load dashboard | `Athmetry Backend Status Reporter` and `Athmetry Frontend Status Reporter` are absent from every card, count, and summary; application pipelines remain visible |
+| Filtered health derivation | Fixture where only a hidden reporter fails | Card and overall status ignore the hidden workflow |
 | Empty repository | Fixture with `workflows: []` | Card shows "No active pipelines found" |
 | Initial fetch failure | Block `data/status.json` | Overall "Error"; all three cards show "Error loading data"; counts `0` |
 | Invalid schema | Fixture failing schema v2 validation | Error state (no crash, no stale markup) |
@@ -129,6 +131,10 @@ python3 -m http.server 8000
 | Error message | Disconnect network, click | "Refresh failed. Showing the last available published status." |
 | Timeout message | Block/delay the request >10s | "Refresh timed out. Showing the last available published status." |
 | Data preserved | On error | Dashboard still shows previous data |
+| Scroll lock (desktop) | During refresh, wheel over the overlay | Background does not scroll while the overlay blocks the page |
+| Scroll lock (mobile) | 375px viewport, touch-drag during refresh | Background does not scroll while the overlay blocks the page |
+| Initial reload lock | Reload the page | Background does not scroll behind the startup overlay |
+| Scroll unlock | After success, failure, or timeout | Overlay closes and background scrolling works immediately; `body.loading-open` is removed |
 | Last checked | After success | Header shows "Last checked: just now"; this is separate from "Last collected" |
 | Keyboard accessible | Tab to button, Enter | Works without mouse |
 
@@ -268,6 +274,7 @@ zizmor --config .github/zizmor.yml .github/workflows/
 
 - Three repository cards render in the expected layout
 - Pipeline counts and branch text are dynamic
+- Internal Status Reporter workflows stay hidden; application pipelines remain
 - Pipeline detail dialog opens for every workflow
 - GitHub confirmation uses `latestRun.runUrl`
 - HTML escaping: workflow name, path, commit message, author, and error text

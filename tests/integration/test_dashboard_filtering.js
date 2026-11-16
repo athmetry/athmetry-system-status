@@ -88,7 +88,7 @@ const SYSTEM_STATUS_REPO_WITHOUT_DEPLOY = {
   ]
 };
 
-// Test data for backend repo (should not be filtered)
+// Test data for backend repo (should not be filtered, except internal reporters)
 const BACKEND_REPO = {
   name: 'athmetry-backend',
   owner: 'athmetry',
@@ -120,6 +120,32 @@ const BACKEND_REPO = {
       latestRun: { runNumber: 10 },
       history: []
     }
+  ]
+};
+
+// Test data with the internal reporter workflows that must stay hidden
+const BACKEND_WITH_REPORTER = {
+  name: 'athmetry-backend',
+  workflows: [
+    { id: 1, name: 'Athmetry Backend Validation', effectiveStatus: 'success' },
+    { id: 2, name: 'Athmetry Backend Status Reporter', effectiveStatus: 'success' }
+  ]
+};
+
+const FRONTEND_WITH_REPORTER = {
+  name: 'athmetry-frontend',
+  workflows: [
+    { id: 1, name: 'Athmetry Frontend CI', effectiveStatus: 'success' },
+    { id: 2, name: 'Dependency Audit', effectiveStatus: 'success' },
+    { id: 3, name: 'Athmetry Frontend Status Reporter', effectiveStatus: 'success' }
+  ]
+};
+
+const FAILING_REPORTER_REPO = {
+  name: 'athmetry-backend',
+  workflows: [
+    { id: 1, name: 'Athmetry Backend Validation', effectiveStatus: 'success' },
+    { id: 2, name: 'Athmetry Backend Status Reporter', effectiveStatus: 'failure' }
   ]
 };
 
@@ -197,6 +223,29 @@ const ONLY_DEPLOY_REPO = {
   ]
 };
 assertEqual(getDisplayWorkflows(ONLY_DEPLOY_REPO).length, 0, 'System-status with only deploy workflow: returns empty array');
+
+// Test 7: internal Status Reporter workflows are hidden, application pipelines remain
+const filteredBackendReporter = getDisplayWorkflows(BACKEND_WITH_REPORTER);
+assertEqual(filteredBackendReporter.length, 1, 'Backend reporter: returns only the application workflow');
+assertEqual(filteredBackendReporter[0].name, 'Athmetry Backend Validation', 'Backend reporter: validation workflow remains visible');
+
+const filteredFrontendReporter = getDisplayWorkflows(FRONTEND_WITH_REPORTER);
+assertEqual(filteredFrontendReporter.length, 2, 'Frontend reporter: returns only application workflows');
+assertEqual(filteredFrontendReporter[0].name, 'Athmetry Frontend CI', 'Frontend reporter: CI workflow remains visible');
+assertEqual(filteredFrontendReporter[1].name, 'Dependency Audit', 'Frontend reporter: dependency audit remains visible');
+
+// Test 8: hidden reporter workflows do not affect displayed repository health
+const filteredFailingReporter = getDisplayWorkflows(FAILING_REPORTER_REPO);
+assertEqual(filteredFailingReporter.length, 1, 'Failing reporter: only the application workflow is displayed');
+assertEqual(
+  calculateOverallStatus(filteredFailingReporter),
+  'success',
+  'Failing internal reporter does not affect displayed repository health'
+);
+
+// Test 9: source data is not mutated by display filtering
+getDisplayWorkflows(BACKEND_WITH_REPORTER);
+assertEqual(BACKEND_WITH_REPORTER.workflows.length, 2, 'Display filtering does not mutate source workflows');
 
 // Test calculateOverallStatus
 console.log('\n=== Testing calculateOverallStatus ===\n');

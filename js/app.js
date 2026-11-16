@@ -67,6 +67,20 @@ const OVERLAY_FADE_OUT_MS = 300;
 let overlayShownAt = 0;
 let overlayHideTimer = null;
 
+/**
+ * Lock background scrolling while the loading overlay blocks the page.
+ * The overlay covers the viewport, but wheel/touch gestures would otherwise
+ * scroll-chain to the document behind it.
+ */
+function lockBackgroundScroll() {
+  document.body.classList.add("loading-open");
+}
+
+/** Release the loading scroll lock. Safe to call repeatedly. */
+function unlockBackgroundScroll() {
+  document.body.classList.remove("loading-open");
+}
+
 function showLoadingOverlay() {
   if (!loadingOverlay) return;
   overlayShownAt = Date.now();
@@ -74,6 +88,7 @@ function showLoadingOverlay() {
     clearTimeout(overlayHideTimer);
     overlayHideTimer = null;
   }
+  lockBackgroundScroll();
   loadingOverlay.classList.remove("hidden", "is-hiding");
 }
 
@@ -83,7 +98,10 @@ function hideLoadingOverlay() {
   // Enforce the minimum visible duration, then dismiss the overlay smoothly.
   const remaining = Math.max(0, MIN_OVERLAY_VISIBLE_MS - (Date.now() - overlayShownAt));
   overlayHideTimer = setTimeout(() => {
+    // The blocking state ends as the overlay starts fading out, so restore
+    // scrolling immediately rather than waiting for the fade to finish.
     loadingOverlay.classList.add("is-hiding");
+    unlockBackgroundScroll();
     overlayHideTimer = setTimeout(() => {
       loadingOverlay.classList.add("hidden");
       loadingOverlay.classList.remove("is-hiding");
@@ -334,6 +352,22 @@ function init() {
     if (refreshTimer) {
       clearInterval(refreshTimer);
       refreshTimer = null;
+    }
+  });
+
+  // Safety net: never leave the loading scroll lock applied after navigating
+  // away, and keep it in sync if the page is restored from the back/forward
+  // cache part-way through a refresh.
+  window.addEventListener("pagehide", unlockBackgroundScroll);
+  window.addEventListener("pageshow", () => {
+    if (!loadingOverlay) return;
+    const isBlocking =
+      !loadingOverlay.classList.contains("hidden") &&
+      !loadingOverlay.classList.contains("is-hiding");
+    if (isBlocking) {
+      lockBackgroundScroll();
+    } else {
+      unlockBackgroundScroll();
     }
   });
 }

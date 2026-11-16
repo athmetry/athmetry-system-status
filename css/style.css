@@ -187,10 +187,12 @@ a:hover {
   border: 0;
 }
 
-/* Modal body scroll lock */
-body.modal-open {
+/* Body scroll lock (dialogs and the blocking loading overlay) */
+body.modal-open,
+body.loading-open {
   overflow: hidden;
   touch-action: none;
+  overscroll-behavior: none;
 }
 
 /* ---------------------------------------------------------------------------

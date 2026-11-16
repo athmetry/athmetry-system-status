@@ -83,16 +83,36 @@ const REPO_DISPLAY_NAMES = {
 // ============================================================================
 
 /**
+ * Internal coordination workflows that are not business-facing pipelines.
+ * They remain in data/status.json (the collector keeps collecting them) but
+ * are hidden at the presentation layer.
+ */
+const INTERNAL_REPORTER_WORKFLOWS = new Set([
+  'Athmetry Backend Status Reporter',
+  'Athmetry Frontend Status Reporter'
+]);
+
+/**
+ * Repo-specific workflows hidden from the dashboard.
+ * Athmetry System Status hides its own Pages deployment pipeline.
+ */
+const HIDDEN_WORKFLOWS_BY_REPO = {
+  'athmetry-system-status': new Set(['Deploy to GitHub Pages'])
+};
+
+/**
  * Get workflows to display for a repository.
- * For athmetry-system-status, excludes the Deploy to GitHub Pages workflow.
+ * Presentation-layer filtering only — it never mutates the source data, so
+ * repository health, commit status, and the collector output are unaffected.
  * @param {object} repo - Repository data
  * @returns {Array} - Filtered workflows array
  */
 export function getDisplayWorkflows(repo) {
-  if (repo.name !== 'athmetry-system-status') {
-    return repo.workflows || [];
-  }
-  return (repo.workflows || []).filter(wf => wf.name !== 'Deploy to GitHub Pages');
+  const hiddenForRepo = HIDDEN_WORKFLOWS_BY_REPO[repo.name];
+  return (repo.workflows || []).filter(wf =>
+    !INTERNAL_REPORTER_WORKFLOWS.has(wf.name) &&
+    !(hiddenForRepo && hiddenForRepo.has(wf.name))
+  );
 }
 
 /** Format an ISO timestamp as a human-readable date/time. */
@@ -490,8 +510,8 @@ function renderOverallStatus(data) {
   const detail = document.getElementById('overall-detail');
   const lastBuildEl = document.getElementById('last-successful-build');
 
-  // Determine overall status from all repositories
-  // For system-status repo, use filtered workflows (excluding Deploy to GitHub Pages)
+  // Determine overall status from the workflows actually shown on the dashboard
+  // (internal reporter workflows and the self-deployment pipeline are excluded).
   let overallStatus = 'unknown';
   let hasFailure = false;
   let hasRunning = false;
@@ -504,12 +524,9 @@ function renderOverallStatus(data) {
       hasData = true;
       return;
     }
-    
-    // Use filtered workflows for system-status repo
-    const workflows = repo.name === 'athmetry-system-status' 
-      ? getDisplayWorkflows(repo)
-      : (repo.workflows || []);
-    
+
+    const workflows = getDisplayWorkflows(repo);
+
     const repoStatus = calculateOverallStatus(workflows);
     
     if (repoStatus === 'failure') {

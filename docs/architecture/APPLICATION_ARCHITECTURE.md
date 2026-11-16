@@ -51,6 +51,8 @@ app.js.init()
     ├─► refreshBtn.click → handleManualRefresh()
     │       └─► fetchStatus() (cache-busted published JSON) → validate
     │           → render + visible loading/success/error state
+    │           → block background scroll while the overlay is blocking
+    │             (body.loading-open), release it as the overlay fades out
     │
     ├─► fetchVisitorInfo() → ipwho.is (fire-and-forget)
     │
@@ -67,6 +69,7 @@ app.js.init()
 | Last fetched data | `statusApi.lastData` (module-scoped) | Session only |
 | Last fetch timestamp | `statusApi.lastFetchAt` | Session only |
 | Refresh in-progress flag | `app.js: isRefreshing` (module-scoped) | Session only |
+| Loading scroll lock | `body.loading-open` (set in markup, released by `app.js`) | Session only |
 | Auto-refresh timer | `app.js: refreshTimer` (module-scoped) | Session only |
 
 ---
@@ -160,6 +163,8 @@ style.css
 ├── Dialogs (.pipeline-detail-dialog, .github-actions-dialog)
 ├── Footer (.site-footer, .footer-visitor)
 ├── Responsive (5 breakpoint ranges)
+├── Loading Overlay (.loading-overlay, body.loading-open scroll lock)
+├── Live Refresh Indicator (.live-refresh-indicator)
 └── Print (hides interactive elements)
 ```
 
@@ -221,7 +226,7 @@ export const statusApi = new StatusApi();
 
 ### Overall Status Card
 
-- **Computed**: `computeOverallStatus(repos)` — priority: failure > running/queued > success > unknown
+- **Computed**: `calculateOverallStatus()` over `getDisplayWorkflows(repo)` for every repository — priority: failure > running/queued > success > unknown
 - **Pill**: `.status-pill` with `.dot` indicator; color via CSS variables
 - **Detail Text**: `overallDetailMessage()` — human-readable summary
 - **Meta Row**: Monitored branch, last successful build, last collected timestamp
@@ -230,10 +235,19 @@ export const statusApi = new StatusApi();
 
 - **Layout**: Backend on the left (full column height); System Status top-right; Frontend bottom-right. Single column below 768px.
 - **Card Structure**: Header (monitor icon + display name + dynamic metadata + product tag + status pill) → Pipelines (count header + rows)
-- **Dynamic Metadata**: `"<N> pipelines · <branch> branch"` derived from `repo.workflows.length` and `data.monitoredBranch`
+- **Dynamic Metadata**: `"<N> pipelines · <branch> branch"` derived from the filtered display workflows and `data.monitoredBranch`
+- **Visibility Filtering**: `getDisplayWorkflows(repo)` is a presentation-layer filter. It hides the internal `Athmetry Backend Status Reporter` and `Athmetry Frontend Status Reporter` workflows everywhere, and hides `Deploy to GitHub Pages` for System Status. The collector, `data/status.json`, and all source workflow data remain unchanged.
 - **Product Tags**: `ATHMETRY-WEB` for Backend/Frontend, `ATHMETRY-SYSTEM-STATUS` for System Status
-- **Status Derivation**: Collector maps GitHub `status` + `conclusion` to `effectiveStatus`; frontend renders that value.
+- **Status Derivation**: Collector maps GitHub `status` + `conclusion` to `effectiveStatus`; the frontend derives the card pill and overall status from the visible (filtered) workflows, so internal reporters never affect displayed repository health.
 - **Pipeline Rows**: Status dot, workflow name/path, latest run number/time, duration, and a details button. Rows grow naturally without clipping.
+
+### Loading Overlay
+
+- **Markup**: `#loading-overlay` is visible by default so it covers the initial page load/reload before JavaScript runs
+- **Lifecycle**: `showLoadingOverlay()` reveals it for initial load and manual refresh; `hideLoadingOverlay()` keeps it visible for at least 1.5s, then fades it out (300ms)
+- **Scroll Lock**: The overlay covers the viewport, but wheel/touch gestures would otherwise scroll-chain to the page behind it. `<body class="loading-open">` starts the lock in the markup; `app.js` re-applies it on show and releases it when the overlay starts fading out. `body.loading-open` uses `overflow: hidden`, `touch-action: none`, and `overscroll-behavior: none` on desktop and mobile.
+- **Safety**: The lock is released on refresh success, failure, or timeout (the `finally` path calls `hideLoadingOverlay()`), and on `pagehide`. A `pageshow` handler re-syncs the lock when restoring from the back/forward cache. The `<noscript>` fallback reveals the page and removes the lock when JavaScript is unavailable.
+- **Accessibility**: `role="status"` with an accessible label; `prefers-reduced-motion` stops the ring animation while keeping the indicator visible.
 
 ### Pipeline Detail Dialog
 
@@ -278,8 +292,8 @@ export const statusApi = new StatusApi();
 | JSON parse error | Same as above |
 | Stale data (>10 min) | Warning in alert banner; dashboard still renders last data |
 | Repo API error (collector) | `repo.error` field populated; frontend shows in alert banner |
-| Manual refresh timeout (10s) | Visible error message "Refresh timed out. Showing the last available published status."; valid dashboard data is retained |
-| Manual refresh network error | Visible error message "Refresh failed. Showing the last available published status."; valid dashboard data is retained |
+| Manual refresh timeout (10s) | Visible error message "Refresh timed out. Showing the last available published status."; valid dashboard data is retained; loading scroll lock is released |
+| Manual refresh network error | Visible error message "Refresh failed. Showing the last available published status."; valid dashboard data is retained; loading scroll lock is released |
 | IP lookup failure | Silent; footer shows "Unavailable" |
 | Theme localStorage unavailable | Defaults to light; no error |
 

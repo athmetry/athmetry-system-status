@@ -9,7 +9,8 @@ Cross-reference table mapping change areas to affected files, required checks, a
 | Change Area | Primary Files | Secondary Files | Tests Required | Docs to Update |
 |-------------|---------------|-----------------|----------------|----------------|
 | Header UI / Theme Toggle | `index.html`, `css/style.css`, `js/app.js` | `js/dashboard.js` (indirect) | Theme toggle, responsive (6 widths × 2 themes) | `APPLICATION_ARCHITECTURE.md`, `CODING_STANDARDS.md`, `TESTING_GUIDE.md` |
-| Refresh Button / Manual Refresh | `index.html`, `css/style.css`, `js/app.js` | `js/api.js`, `js/dashboard.js` | Manual refresh (success/error/timeout), auto-refresh | `APPLICATION_ARCHITECTURE.md`, `CODING_STANDARDS.md`, `TESTING_GUIDE.md` |
+| Refresh Button / Manual Refresh | `index.html`, `css/style.css`, `js/app.js` | `js/api.js`, `js/dashboard.js` | Manual refresh (success/error/timeout), auto-refresh, scroll lock/unlock (desktop + mobile) | `APPLICATION_ARCHITECTURE.md`, `CODING_STANDARDS.md`, `TESTING_GUIDE.md` |
+| Dashboard Pipeline Visibility | `js/dashboard.js` (`getDisplayWorkflows`) | `data/status.json` (source data unchanged) | Reporter workflows hidden, application pipelines visible, health derivation | `APPLICATION_ARCHITECTURE.md`, `TESTING_GUIDE.md` |
 | Auto-Refresh Interval | `js/app.js` (`REFRESH_INTERVAL_MS`) | `js/api.js` (`STALE_THRESHOLD_MS`) | Auto-refresh timing (60s) | `APPLICATION_ARCHITECTURE.md`, `DATA_FLOW.md` |
 | Theme System (CSS Variables) | `css/style.css` (`:root`, `[data-theme="dark"]`) | `index.html` (inline script), `js/app.js` (initTheme) | Both themes, all breakpoints, no flash | `APPLICATION_ARCHITECTURE.md`, `CODING_STANDARDS.md`, `ARCHITECTURE_DECISIONS.md` |
 | Responsive Breakpoints | `css/style.css` (media queries) | `index.html` (viewport meta) | 6 widths × 2 themes, no horizontal overflow | `APPLICATION_ARCHITECTURE.md`, `TESTING_GUIDE.md` |
@@ -67,12 +68,15 @@ css/style.css
   ├── .refresh-btn (min-width, font-weight, .refreshing state)
   ├── .refresh-btn.refreshing (spinner animation, color)
   ├── .refresh-status (.loading, .success, .error)
+  ├── body.loading-open (overflow: hidden, touch-action: none)
   └── @media (prefers-reduced-motion) — spinner fallback
 
 js/app.js
-  ├── handleManualRefresh() — Promise.race, timeout, states
-  ├── setRefreshState() — button disabled, spinner, label
-  └── showRefreshMessage() — toast with auto-clear
+  ├── handleManualRefresh() — fetch published JSON, states
+  ├── showLoadingOverlay() / hideLoadingOverlay() — overlay lifecycle
+  ├── lockBackgroundScroll() / unlockBackgroundScroll() — body.loading-open
+  ├── setRefreshStatus() — loading, success, or error message
+  └── pagehide/pageshow safety net — lock never left applied
 ```
 
 **Impact Radius**: Medium — user-facing action, loading states, error handling

@@ -95,6 +95,34 @@ data and must not update the browser's "Last checked" timestamp. Browser refresh
 time is separate from the collector's `collectedAt` timestamp, and refresh
 messaging must not imply that a GitHub Actions collection was triggered.
 
+### Body Scroll Lock
+
+Blocking UI states must lock background scrolling for the lifetime of the
+blocking state, on both desktop and mobile:
+
+```javascript
+// app.js — loading overlay
+function lockBackgroundScroll() {
+  document.body.classList.add("loading-open");
+}
+
+function unlockBackgroundScroll() {
+  document.body.classList.remove("loading-open");
+}
+```
+
+Rules:
+- The scroll lock is owned by a single body class (`modal-open` for `<dialog>`
+  modals, `loading-open` for the loading overlay) and the matching CSS uses
+  `overflow: hidden`, `touch-action: none`, and `overscroll-behavior: none`.
+- Start the initial lock in markup (`<body class="loading-open">`) so a reload
+  cannot scroll behind the overlay before JavaScript runs.
+- Always release the lock on success, error, timeout, and navigation
+  (`pagehide`). Never leave `overflow: hidden` applied after the blocking state
+  ends.
+- Keep the lock release in the same lifecycle path that dismisses the overlay;
+  use `finally` for refresh paths.
+
 ### DOM Manipulation
 
 ```javascript
@@ -215,6 +243,8 @@ html, body { ... }
 /* State (used with JS) */
 .refresh-btn.refreshing { ... }
 .tab.active { ... }
+body.loading-open { ... }
+body.modal-open { ... }
 ```
 
 ### Responsive Design

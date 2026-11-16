@@ -52,6 +52,98 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
 });
 
+test('internal status reporter workflows are hidden while application pipelines remain', async ({ page }) => {
+  // No Status Reporter row is rendered anywhere on the dashboard.
+  await expect(page.locator('.pipeline-row', { hasText: 'Status Reporter' })).toHaveCount(0);
+  for (const repoKey of ['backend', 'frontend', 'system-status']) {
+    await expect(page.locator(`#${repoKey}-pipelines-list`)).not.toContainText('Status Reporter');
+  }
+
+  // Application pipelines are still visible and their health is unchanged.
+  await expect(page.locator('#backend-pipelines-list')).toContainText('Athmetry Backend Validation');
+  await expect(page.locator('#frontend-pipelines-list')).toContainText('Athmetry Frontend CI');
+  await expect(page.locator('#backend-overall-pill')).toContainText('Success');
+  await expect(page.locator('#frontend-overall-pill')).toContainText('Success');
+
+  // Counts and rows reflect the filtered workflow list.
+  const expectedCounts = {
+    backend: STATUS_FIXTURE.repositories
+      .find((repo) => repo.name === 'athmetry-backend')
+      .workflows.filter((wf) => wf.name !== 'Athmetry Backend Status Reporter').length,
+    frontend: STATUS_FIXTURE.repositories
+      .find((repo) => repo.name === 'athmetry-frontend')
+      .workflows.filter((wf) => wf.name !== 'Athmetry Frontend Status Reporter').length,
+    'system-status': STATUS_FIXTURE.repositories
+      .find((repo) => repo.name === 'athmetry-system-status')
+      .workflows.filter((wf) => wf.name !== 'Deploy to GitHub Pages').length,
+  };
+
+  for (const [repoKey, expectedCount] of Object.entries(expectedCounts)) {
+    await expect(page.locator(`#${repoKey}-pipelines-list .pipeline-row`)).toHaveCount(expectedCount);
+    await expect(page.locator(`#${repoKey}-pipelines-count`)).toHaveText(String(expectedCount));
+  }
+});
+
+const SCROLL_LOCK_VIEWPORTS = [
+  { label: 'mobile', width: 375, height: 640 },
+  { label: 'desktop', width: 1280, height: 700 },
+];
+
+for (const viewport of SCROLL_LOCK_VIEWPORTS) {
+  test(`manual refresh locks background scrolling until the overlay closes (${viewport.label})`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await mockStatusRequests(page, { delayAfterInitial: true, delayMs: 2500 });
+    await page.reload();
+    await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
+    await expect(page.locator('#loading-overlay')).toHaveClass(/hidden/);
+
+    // Sanity check: the page is taller than the viewport, so scrolling is possible.
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)
+    ).toBe(true);
+
+    await page.locator('#refresh-btn').click();
+    await expect(page.locator('#loading-overlay')).toBeVisible();
+    await expect(page.locator('body')).toHaveClass(/loading-open/);
+    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).toBe('hidden');
+    expect(await page.evaluate(() => getComputedStyle(document.body).touchAction)).toBe('none');
+
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+
+    await expect(page.locator('#refresh-status')).toHaveText('Published status loaded.', { timeout: 15000 });
+    await expect(page.locator('#loading-overlay')).toHaveClass(/hidden/, { timeout: 10000 });
+    await expect(page.locator('body')).not.toHaveClass(/loading-open/);
+    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden');
+    expect(await page.evaluate(() => getComputedStyle(document.body).touchAction)).not.toBe('none');
+
+    // Scrolling works again after the refresh completes.
+    await page.mouse.wheel(0, 600);
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(scrollBefore);
+  });
+
+  test(`failed manual refresh releases the scroll lock (${viewport.label})`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await mockStatusRequests(page, { failAfterInitial: true });
+    await page.reload();
+    await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
+
+    await page.locator('#refresh-btn').click();
+    await expect(page.locator('body')).toHaveClass(/loading-open/);
+    await expect(page.locator('#refresh-status')).toHaveText(
+      'Refresh failed. Showing the last available published status.'
+    );
+    await expect(page.locator('#loading-overlay')).toHaveClass(/hidden/, { timeout: 10000 });
+    await expect(page.locator('body')).not.toHaveClass(/loading-open/);
+    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden');
+    expect(await page.evaluate(() => getComputedStyle(document.body).touchAction)).not.toBe('none');
+  });
+}
+
 test('manual refresh loads published status with cache busting', async ({ page }) => {
   const requests = await mockStatusRequests(page);
   const githubApiRequests = [];
@@ -84,14 +176,16 @@ test('failed manual refresh preserves valid dashboard data and reports failure',
   await page.reload();
   await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
 
-  const pipelineTextBefore = await page.locator('#backend-pipelines-list').textContent();
+  // Compare pipeline identities, not relative timestamps, which legitimately
+  // change while the request is in flight.
+  const pipelineNamesBefore = await page.locator('#backend-pipelines-list .pipeline-name').allTextContents();
   await page.locator('#refresh-btn').click();
 
   await expect(page.locator('#refresh-status')).toHaveText(
     'Refresh failed. Showing the last available published status.'
   );
-  expect(await page.locator('#backend-pipelines-list').textContent()).toBe(pipelineTextBefore);
-  expect(await page.locator('#backend-pipelines-list').textContent()).not.toContain('Error loading data');
+  expect(await page.locator('#backend-pipelines-list .pipeline-name').allTextContents()).toEqual(pipelineNamesBefore);
+  await expect(page.locator('#backend-pipelines-list')).not.toContainText('Error loading data');
 });
 
 test('dashboard has no horizontal overflow at release viewport widths', async ({ page }) => {
@@ -119,13 +213,13 @@ test('invalid published status is rejected without replacing valid dashboard dat
   await page.reload();
   await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
 
-  const pipelineTextBefore = await page.locator('#backend-pipelines-list').textContent();
+  const pipelineNamesBefore = await page.locator('#backend-pipelines-list .pipeline-name').allTextContents();
   await page.locator('#refresh-btn').click();
 
   await expect(page.locator('#refresh-status')).toHaveText(
     'Refresh failed. Showing the last available published status.'
   );
-  expect(await page.locator('#backend-pipelines-list').textContent()).toBe(pipelineTextBefore);
+  expect(await page.locator('#backend-pipelines-list .pipeline-name').allTextContents()).toEqual(pipelineNamesBefore);
 });
 
 test('timed out manual refresh preserves valid dashboard data and reports timeout', async ({ page }) => {
@@ -133,12 +227,12 @@ test('timed out manual refresh preserves valid dashboard data and reports timeou
   await page.reload();
   await expect(page.locator('#backend-pipelines-list')).not.toHaveText('Loading pipelines...');
 
-  const pipelineTextBefore = await page.locator('#backend-pipelines-list').textContent();
+  const pipelineNamesBefore = await page.locator('#backend-pipelines-list .pipeline-name').allTextContents();
   await page.locator('#refresh-btn').click();
 
   await expect(page.locator('#refresh-status')).toHaveText(
     'Refresh timed out. Showing the last available published status.',
     { timeout: 15000 }
   );
-  expect(await page.locator('#backend-pipelines-list').textContent()).toBe(pipelineTextBefore);
+  expect(await page.locator('#backend-pipelines-list .pipeline-name').allTextContents()).toEqual(pipelineNamesBefore);
 });
