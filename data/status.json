@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "collectedAt": "2026-11-16T16:43:24Z",
+  "collectedAt": "2026-11-17T00:35:00Z",
   "monitoredBranch": "main",
   "repositories": [
     {
@@ -817,26 +817,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 43851709054,
-            "runNumber": 45,
+            "runId": 43910582053,
+            "runNumber": 46,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43851709054",
-            "commitSha": "8a5a22be7ec2b8c6b1cd6102b5f9f3f9f7dd364d",
-            "commitMessage": "chore(status-event): update backend pipeline status (run 46)",
-            "commitAuthor": "athmetry",
-            "startedAt": "2026-11-16T10:45:37Z",
-            "completedAt": "2026-11-16T10:46:08Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43910582053",
+            "commitSha": "acba6bbc38dba0e0558d5c1320bd6189b58b2c4e",
+            "commitMessage": "feat(status): hide internal reporters and lock scroll while loading",
+            "commitAuthor": "mdtausif1",
+            "startedAt": "2026-11-16T16:43:10Z",
+            "completedAt": "2026-11-16T16:43:50Z",
             "jobs": [
               {
                 "name": "Collect pipeline status",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-16T10:45:40Z",
-                "completed_at": "2026-11-16T10:46:08Z"
+                "started_at": "2026-11-16T16:43:13Z",
+                "completed_at": "2026-11-16T16:43:49Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 46,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "acba6bbc38dba0e0558d5c1320bd6189b58b2c4e",
+              "startedAt": "2026-11-16T16:43:10Z",
+              "completedAt": "2026-11-16T16:43:50Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43910582053"
+            },
             {
               "runNumber": 45,
               "status": "completed",
@@ -863,15 +872,6 @@
               "startedAt": "2026-11-16T00:05:24Z",
               "completedAt": "2026-11-16T00:05:54Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43778296518"
-            },
-            {
-              "runNumber": 42,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "3ea1427e68eee1ebce216baa2736908977366bc6",
-              "startedAt": "2026-11-15T21:21:35Z",
-              "completedAt": "2026-11-15T21:22:03Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43763244202"
             }
           ]
         },
@@ -887,33 +887,42 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 43859818408,
-            "runNumber": 69,
+            "runId": 43910711166,
+            "runNumber": 70,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43859818408",
-            "commitSha": "acba6bbc38dba0e0558d5c1320bd6189b58b2c4e",
-            "commitMessage": "feat(status): hide internal reporters and lock scroll while loading",
-            "commitAuthor": "mdtausif1",
-            "startedAt": "2026-11-16T11:40:30Z",
-            "completedAt": "2026-11-16T11:40:56Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43910711166",
+            "commitSha": "ed5dfe07d7a3475b1a4cad7747ba3dde2eaa6e0d",
+            "commitMessage": "chore(status): update pipeline status data (2026-11-16T16:43:46Z)",
+            "commitAuthor": "athmetry-status-bot",
+            "startedAt": "2026-11-16T16:43:53Z",
+            "completedAt": "2026-11-16T16:44:20Z",
             "jobs": [
               {
                 "name": "Verify deployment gate",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-16T11:40:32Z",
-                "completed_at": "2026-11-16T11:40:37Z"
+                "started_at": "2026-11-16T16:43:55Z",
+                "completed_at": "2026-11-16T16:44:02Z"
               },
               {
                 "name": "Deploy static site to GitHub Pages",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-16T11:40:41Z",
-                "completed_at": "2026-11-16T11:40:55Z"
+                "started_at": "2026-11-16T16:44:07Z",
+                "completed_at": "2026-11-16T16:44:20Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 70,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "ed5dfe07d7a3475b1a4cad7747ba3dde2eaa6e0d",
+              "startedAt": "2026-11-16T16:43:53Z",
+              "completedAt": "2026-11-16T16:44:20Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43910711166"
+            },
             {
               "runNumber": 69,
               "status": "completed",
@@ -949,15 +958,6 @@
               "startedAt": "2026-11-16T10:45:50Z",
               "completedAt": "2026-11-16T10:46:19Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43851742479"
-            },
-            {
-              "runNumber": 65,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "348221ac6aa9cfd7ebae0d4fbe015a5fd8bc1d96",
-              "startedAt": "2026-11-16T06:57:32Z",
-              "completedAt": "2026-11-16T06:57:57Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/43820364972"
             }
           ]
         },
