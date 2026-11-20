@@ -5,97 +5,97 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "53655a4f9d4f0cefa79c5ffd82da0ec1ef2d9e6e",
-      "message": "test(health): freeze clock and uptime in live alias spec (#5)",
+      "sha": "dece346d0918e59d8e68bb6ebbe89367459a0889",
+      "message": "docs(backend): optimize AI context hierarchy, archive reports, and finalize workspace cleanup (#6)",
       "author": "Md Tausif"
     },
     "workflow": {
       "name": "Athmetry Backend Validation",
       "path": ".github/workflows/ci.yml",
-      "runId": 44834655620,
-      "runNumber": 50,
+      "runId": 44838926983,
+      "runNumber": 52,
       "runAttempt": 1,
-      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44834655620",
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44838926983",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-20T23:09:20Z",
-      "startedAt": "2026-11-20T23:09:20Z",
-      "completedAt": "2026-11-20T23:11:17Z",
+      "triggeredAt": "2026-11-20T23:44:00Z",
+      "startedAt": "2026-11-20T23:44:00Z",
+      "completedAt": "2026-11-20T23:45:41Z",
       "jobs": [
-        {
-          "name": "Athmetry Backend Validation / Lint, typecheck, test and build",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-20T23:09:22Z",
-          "completed_at": "2026-11-20T23:10:53Z"
-        },
-        {
-          "name": "Athmetry Security & Supply Chain / Secret scanning (Gitleaks)",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-20T23:09:22Z",
-          "completed_at": "2026-11-20T23:09:28Z"
-        },
         {
           "name": "Athmetry Security & Supply Chain / Workflow security analysis (zizmor)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-20T23:09:22Z",
-          "completed_at": "2026-11-20T23:09:30Z"
+          "started_at": "2026-11-20T23:44:02Z",
+          "completed_at": "2026-11-20T23:44:06Z"
         },
         {
           "name": "Athmetry Security & Supply Chain / Dependency audit (high and critical)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-20T23:09:22Z",
-          "completed_at": "2026-11-20T23:09:38Z"
+          "started_at": "2026-11-20T23:44:02Z",
+          "completed_at": "2026-11-20T23:44:16Z"
+        },
+        {
+          "name": "Athmetry Security & Supply Chain / Secret scanning (Gitleaks)",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-20T23:44:02Z",
+          "completed_at": "2026-11-20T23:44:07Z"
+        },
+        {
+          "name": "Athmetry Backend Validation / Lint, typecheck, test and build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-20T23:44:02Z",
+          "completed_at": "2026-11-20T23:45:33Z"
         },
         {
           "name": "Athmetry Database Validation / PostgreSQL migrations, integration tests and schema drift check",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-20T23:09:22Z",
-          "completed_at": "2026-11-20T23:11:16Z"
+          "started_at": "2026-11-20T23:44:02Z",
+          "completed_at": "2026-11-20T23:45:40Z"
         }
       ]
     },
     "pipeline": {
-      "revision": "Athmetry Backend Validation:44834655620:1|Athmetry Database Validation:44834655571:1|Athmetry Security & Supply Chain:44834655509:1",
+      "revision": "Athmetry Backend Validation:44838926983:1|Athmetry Database Validation:44838926737:1|Athmetry Security & Supply Chain:44838926731:1",
       "effectiveStatus": "success",
       "workflows": [
         {
-          "name": "Athmetry Backend Validation",
-          "path": ".github/workflows/ci.yml",
-          "runId": 44834655620,
-          "runNumber": 50,
-          "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44834655620",
-          "status": "completed",
-          "conclusion": "success",
-          "effectiveStatus": "success",
-          "jobCount": 1
-        },
-        {
           "name": "Athmetry Security & Supply Chain",
           "path": ".github/workflows/security.yml",
-          "runId": 44834655509,
-          "runNumber": 37,
+          "runId": 44838926731,
+          "runNumber": 40,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44834655509",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44838926731",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
           "jobCount": 3
         },
         {
+          "name": "Athmetry Backend Validation",
+          "path": ".github/workflows/ci.yml",
+          "runId": 44838926983,
+          "runNumber": 52,
+          "runAttempt": 1,
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44838926983",
+          "status": "completed",
+          "conclusion": "success",
+          "effectiveStatus": "success",
+          "jobCount": 1
+        },
+        {
           "name": "Athmetry Database Validation",
           "path": ".github/workflows/database-ci.yml",
-          "runId": 44834655571,
-          "runNumber": 31,
+          "runId": 44838926737,
+          "runNumber": 33,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44834655571",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44838926737",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -104,14 +104,14 @@
       ]
     },
     "effectiveStatus": "success",
-    "reportedAt": "2026-11-20T23:11:53Z",
+    "reportedAt": "2026-11-20T23:45:42Z",
     "source": "pipeline_completion"
   },
   "meta": {
-    "reportedAt": "2026-11-20T23:11:53Z",
-    "sourceRunId": 44834655620,
+    "reportedAt": "2026-11-20T23:45:42Z",
+    "sourceRunId": 44838926983,
     "sourceRunAttempt": 1,
-    "pipelineRevision": "Athmetry Backend Validation:44834655620:1|Athmetry Database Validation:44834655571:1|Athmetry Security & Supply Chain:44834655509:1",
+    "pipelineRevision": "Athmetry Backend Validation:44838926983:1|Athmetry Database Validation:44838926737:1|Athmetry Security & Supply Chain:44838926731:1",
     "version": 1
   }
 }
