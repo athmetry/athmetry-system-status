@@ -1,36 +1,58 @@
 name: Collect System Status
 
-on:
+# Collects pipeline status across athmetry-backend, athmetry-frontend, and
+# athmetry-system-status on main and commits data/status.json when changed.
+#
+# Triggers on completed commit pipelines (CI Integration Tests / Security Scan)
+# so collection runs after a commit's workflows reach terminal state instead of
+# racing push-triggered workflows, with a 30-minute scheduled fallback and
+# workflow_dispatch for manual recovery. Collect System Status itself and Deploy
+# to GitHub Pages are deliberately omitted to prevent workflow loops.
+#
+# Justification: workflow_run is restricted to two trusted main-branch workflows
+# with least-privilege checks, trusted default-branch checkout, env-var input
+# handling, and no artifact consumption.
+on: # zizmor: ignore[dangerous-triggers] workflow_run is restricted to trusted main-branch workflows with no untrusted checkout or artifact consumption
+  workflow_run:
+    workflows:
+      - 'CI Integration Tests'
+      - 'Security Scan'
+    types: [completed]
+    branches: [main]
   schedule:
     # Run automatically every 30 minutes as a fallback.
     - cron: '*/30 * * * *'
   workflow_dispatch:
     # Allow manual execution.
-  push:
-    # Process Backend reporter events promptly. The collector's own output
-    # (data/status.json) is intentionally excluded to prevent a workflow loop.
-    branches: [main]
-    paths:
-      - 'data/status-events/backend.json'
-      - 'data/status-events/frontend.json'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: collect-status
+  # Do not cancel an active run: collect-status.yml is displayed on the
+  # dashboard, so cancelling it would surface a Cancelled status.
   cancel-in-progress: false
 
 jobs:
   collect:
     name: Collect pipeline status
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    if: |
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.status == 'completed' &&
+       github.event.workflow_run.event != 'pull_request' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.name != 'Collect System Status')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.repository.default_branch }}
           # Use the fine-grained PAT so the workflow can commit back to this repo.
           token: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
           persist-credentials: false
@@ -43,8 +65,15 @@ jobs:
       - name: Collect status data
         id: collect
         env:
-          # PAT used exclusively for GitHub API reads (backend/frontend repos).
+          # PAT used exclusively for GitHub API reads (monitored repos).
           ATHMETRY_GITHUB_TOKEN: ${{ secrets.ATHMETRY_GITHUB_TOKEN }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
+          TRIGGER_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          TRIGGER_WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          TRIGGER_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
         run: |
           ./.github/scripts/collect-status.sh
 

@@ -1,263 +1,38 @@
 # Athmetry System Status — Agent Instructions
 
-**Mandatory reading for every AI agent working in this repository.**
+## Scope & Pinned Stack
 
----
+Static engineering CI/CD health monitoring dashboard (`athmetry-system-status`) for `athmetry-backend`, `athmetry-frontend`, and `athmetry-system-status` (`main` branch).
+- **Live URL:** `https://athmetry.github.io/athmetry-system-status/` (`CNAME` reserved empty for future `status.athmetry.com`).
+- **Stack:** Vanilla HTML5 (`index.html`), CSS3 custom-property themes (`css/style.css`), ES modules (`js/app.js`, `js/api.js`, `js/dashboard.js`), JSON (`data/status.json` schema v2, `data/status-events/{backend,frontend}.json`), Bash + `gh` + `jq` collector (`.github/scripts/collect-status.sh`), GitHub Actions, GitHub Pages.
+- **No runtime framework or build step.** `package.json` (`version: "1.0.0"`, `@playwright/test`) is for dev/CI tests and is the **single source of truth** for the footer release label (`Release v<major>.<minor>`). Never hardcode release versions in HTML/JS or modify `athmetry-backend` / `athmetry-frontend` from this repository.
 
-## What This Project Does
+## Workflows, Collector & Portal Invariants
 
-A lightweight, static engineering health monitoring website for Athmetry. Centralizes CI/CD pipeline health of `athmetry-backend`, `athmetry-frontend`, and `athmetry-system-status` repositories in one place. No frameworks, no backend, no database — just HTML, CSS, vanilla JavaScript, JSON, GitHub Actions, and GitHub Pages.
+- **Four workflows (`.github/workflows/`):**
+  1. `collect-status.yml` (`Collect System Status`) — Triggers on `workflow_run` completion of `CI Integration Tests` or `Security Scan` on `main`, `*/30 * * * *` fallback cron, and `workflow_dispatch`. Uses `ATHMETRY_GITHUB_TOKEN` (fine-grained PAT) for GitHub API reads + checkout and built-in `GITHUB_TOKEN` for `git push` of `data/status.json`. Concurrency `group: collect-status`, `cancel-in-progress: false` (never `true`, because `Collect System Status` is displayed on the dashboard).
+  2. `deploy-pages.yml` (`Deploy to GitHub Pages`) — Triggers on `workflow_run` completion of `Security Scan` or `Collect System Status` on `main`. Deploys only when `main` HEAD matches the latest successful `Security Scan` SHA or differs from it solely by `data/status.json`.
+  3. `security-scan.yml` (`Security Scan`) — Runs `gitleaks` `8.30.1` on tracked files and `zizmor` `1.32.0` against `.github/workflows/` using `.github/zizmor.yml` (`actions/checkout`, `actions/*`, `*` SHA-pinned; `actions/upload-pages-artifact` and `actions/deploy-pages` `@v4`).
+  4. `ci-test.yml` (`CI Integration Tests`) — Runs `npm ci && npm run test:integration` on PRs and pushes to `main`.
+- **Collector accuracy (`.github/scripts/collect-status.sh`):** Waits for sibling `push` workflows (`ci-test.yml`, `security-scan.yml`) on `TRIGGER_HEAD_SHA` to reach terminal `completed` state; queries `status=completed` and excludes active `GITHUB_RUN_ID` for self-monitoring (`collect-status.yml`); reconciles run-vs-jobs completion lag via `/actions/runs/{id}`; merges validated Backend/Frontend status events with stale-event protection (`runId`/`runAttempt`); excludes hidden internal workflows from `repo.overallStatus`; skips duplicate `workflow_run` publishes for an already-settled commit. Must remain macOS Bash 3.2+ and Linux Bash 5+ compatible.
+- **Frontend invariants (`js/`):** Three-card layout (`athmetry-backend` left, `athmetry-system-status` top-right, `athmetry-frontend` bottom-right); 60s auto-refresh (`REFRESH_INTERVAL_MS = 60000`); manual refresh re-fetches published `data/status.json` with cache busting, 10s timeout, and 1.5s minimum scroll-locked loading overlay (never triggers collection); 10-min stale warning (`STALE_THRESHOLD_MS = 600000`); presentation filtering (`getDisplayWorkflows`) hides `Athmetry Backend Status Reporter`, `Athmetry Frontend Status Reporter`, and `Deploy to GitHub Pages`; `resolveEffectiveStatus` reconciles completed `latestRun` data; all dynamic HTML uses `escapeHtml()`; inline `<head>` theme script prevents flash; zero horizontal overflow across `320, 375, 430, 768, 1024, 1440px` in light and dark themes.
 
-**Production URL:** https://athmetry.github.io/athmetry-system-status/
+## Validation, Security & Release Gates
 
----
+- **Run and pass before any PR/merge:**
+  - `for f in js/*.js; do node --check "$f"; done`
+  - `bash -n .github/scripts/collect-status.sh`
+  - `jq empty data/status.json package.json && node scripts/validate-status-json.js`
+  - `ruby -ryaml -e 'ARGV.each { |f| YAML.load_file(f); puts "OK #{f}" }' .github/workflows/*.yml .github/zizmor.yml`
+  - `zizmor --config .github/zizmor.yml --offline .github/workflows/`
+  - `npx --yes html-validate@11.21.1 --rule void-style:off --rule no-implicit-button-type:off --rule no-trailing-whitespace:off index.html`
+  - `npx --yes csstree-validator@4.0.1 css/style.css`
+  - `npm run test:integration` and `npm run test:browser`
+- **Safety rules:** Never commit, push, merge, deploy, or edit secrets/schedules without explicit user authorization. Never expose tokens or secrets in code, logs, or docs. Keep `git status` clean (no `.bak` or temp files) and verify zero broken relative Markdown links.
 
-## Current Release Status
+## Documentation Hierarchy & Skills (Load Minimal Context)
 
-- **Phase 1**: Deployed at commit `57238f7`
-- **v1.0 release candidate**: complete in the working tree, awaiting the first push
-- **Workflows**: three — `collect-status.yml`, `deploy-pages.yml`, `security-scan.yml`
-- **Collector**: Backend-event driven, with a 30-minute scheduled fallback; self-monitoring enabled
-- **Deployment**: quality-gated on Security Scan via `workflow_run`
-- **Repositories**: Three cards — Backend (left), System Status (top-right), Frontend (bottom-right)
-- **Frontend**: Auto-refreshes every 60 seconds
-- **Theme**: Light/dark mode with localStorage persistence
-- **Responsive**: Tested at 6 release viewport widths (320–1440px), zero horizontal overflow
-
----
-
-## Repository Structure
-
-```
-athmetry-system-status/
-├── index.html                 # Application entry point
-├── css/style.css              # Styles (theme variables, responsive, print)
-├── js/
-│   ├── api.js                 # Data access layer (fetches status.json)
-│   ├── app.js                 # Bootstrap, auto-refresh, theme, manual refresh, IP lookup, release version
-│   └── dashboard.js           # DOM rendering logic
-├── data/status.json           # Normalized pipeline status (generated by collector)
-├── assets/brand/              # Logo variants (light/dark, favicon, app icon)
-├── docs/                      # Architecture, development, deployment, operations docs
-├── scripts/
-│   └── validate-status-json.js  # Schema/data-contract validator
-├── .github/
-│   ├── workflows/
-│   │   ├── collect-status.yml   # Collector: Backend event + 30-min fallback + workflow_dispatch
-│   │   ├── deploy-pages.yml     # Quality-gated Pages deployment
-│   │   └── security-scan.yml    # gitleaks + zizmor security scanning
-│   ├── zizmor.yml               # Zizmor action-pinning policy
-│   └── scripts/
-│       └── collect-status.sh    # Collector shell script (gh + jq)
-├── package.json               # Dev tooling + release version source
-├── CNAME                      # Reserved for status.athmetry.com (empty)
-├── .gitignore
-└── README.md
-```
-
----
-
-## How the Collector Works
-
-**File:** `.github/scripts/collect-status.sh`
-
-1. **Triggers**: Backend event push (`data/status-events/backend.json` on `main`), cron `*/30 * * * *` fallback, or `workflow_dispatch`
-2. **Auth**: Uses `ATHMETRY_GITHUB_TOKEN` (fine-grained PAT) via `GH_TOKEN`
-3. **API Calls** (per repo):
-   - `GET /repos/{owner}/{repo}/actions/workflows` — discover workflows
-   - `GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs?branch=main&per_page=5` — recent runs
-   - `GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs` — job details
-   - `GET /repos/{owner}/{repo}/commits/{sha}` — commit metadata
-4. **Normalization**: Derives `effectiveStatus` per workflow and `overallStatus` per repo from GitHub `status` + `conclusion`; keeps up to 5 runs per workflow
-5. **Self-monitoring**: `athmetry-system-status`'s own `collect-status.yml` is included. Because a collector run always observes itself as `in_progress`, the most recent **completed** run is reported (falling back to the raw list on the very first run). Failed collector runs therefore appear as `failure`.
-6. **Output**: Writes `data/status.json` only if changed (cmp check)
-7. **Commit**: Pushes to `main` via `GITHUB_TOKEN` (not the PAT)
-
-**Monitored Repos**: Configured in `MONITORED_REPOS` array in `collect-status.sh`.
-
----
-
-## How the Frontend Works
-
-**Entry Point:** `index.html` → `js/app.js` (ES module)
-
-1. **Initial Load**: `renderDashboard()` fetches `data/status.json?t=<timestamp>`
-2. **Auto-refresh**: Timer every 60s calls `renderDashboard()` — fetches latest published JSON
-3. **Manual Refresh**: Button fetches the latest published `data/status.json` with cache busting, schema validation, a 10s timeout, and visible success/failure messaging; it does not trigger collection
-4. **Theme**: localStorage `athmetry-theme` + `data-theme` on `<html>`, applied before paint
-5. **IP Lookup**: `ipwho.is` (non-blocking, 5s timeout, shown in footer, "Unavailable" fallback)
-6. **Pipeline Details**: Row/button opens `pipeline-detail-dialog`; "View on GitHub" opens confirmation and uses `latestRun.runUrl`
-7. **Release Version**: `fetchReleaseVersion()` reads `package.json` and renders `Release v<major>.<minor>`
-
-**Data Contract:** See `data/status.json` schema in `docs/architecture/DATA_FLOW.md`.
-
----
-
-## How Deployments Work
-
-### Collector Workflow (`.github/workflows/collect-status.yml`)
-- **Triggers**: Backend event push on `main`, schedule (30-min fallback), and manual dispatch
-- **Permissions**: `contents: write` (to commit status.json)
-- **Auth**: `ATHMETRY_GITHUB_TOKEN` secret (fine-grained PAT)
-- **Output**: Commits `data/status.json` only when changed
-
-### Pages Deployment Workflow (`.github/workflows/deploy-pages.yml`)
-- **Triggers**: `workflow_run` completion of `Security Scan` or `Collect System Status` on `main` (no `push` trigger)
-- **Why not `push`**: pushes made with the built-in `GITHUB_TOKEN` do not trigger `push` workflows (GitHub loop prevention). The collector commits with `GITHUB_TOKEN`, so `workflow_run` completion events are used instead.
-- **Gate**: deploys only when the triggering run succeeded on `main` and the current `main` head is the latest Security-Scan-validated revision, or differs from it only by `data/status.json`. Pull requests, failed/cancelled runs, stale revisions, diverged history and duplicate deploys are blocked.
-- **Permissions**: workflow-level `contents: read`; job-level `actions: read` (gate) and `contents: read` + `pages: write` + `id-token: write` (deploy)
-- **Action**: checks out the exact validated SHA, verifies `git rev-parse HEAD`, then `actions/upload-pages-artifact` + `actions/deploy-pages@v4`
-- **Source**: Entire repository root (`.`)
-
-### Security Scan Workflow (`.github/workflows/security-scan.yml`)
-- **Triggers**: Pull request, push to `main`, weekly schedule (Monday 03:17 UTC), manual dispatch
-- **Permissions**: `contents: read`
-- **Checks**: gitleaks 8.30.1 on tracked files, zizmor 1.32.0 on workflow definitions
-- **Policy**: `.github/zizmor.yml`
-- **Read-only**: never commits, deploys, or modifies data
-
-**Deployment Flow:**
-1. Developer pushes to `main` → `security-scan.yml` runs
-2. On success, `deploy-pages.yml` (`workflow_run`) deploys the validated SHA
-3. Collector commits `status.json` with `GITHUB_TOKEN` → `collect-status.yml` completes → `deploy-pages.yml` (`workflow_run`) deploys the new head if the code lineage is already security-validated
-4. Live at https://athmetry.github.io/athmetry-system-status/
-
----
-
-## Testing
-
-**Static validation is run locally / in the release process; browser behavior is verified manually.**
-
-```bash
-# Local development server
-python3 -m http.server 8000
-# Open http://localhost:8000/index.html
-
-# Static validation
-for f in js/*.js; do node --check "$f"; done
-jq empty data/status.json package.json
-node scripts/validate-status-json.js
-npx --yes html-validate@11.21.1 --rule void-style:off --rule no-implicit-button-type:off --rule no-trailing-whitespace:off index.html
-npx --yes csstree-validator@4.0.1 css/style.css
-
-# Collector in isolation (back up and restore production data)
-cp data/status.json /tmp/status.before.json
-./.github/scripts/collect-status.sh   # requires gh, jq, ATHMETRY_GITHUB_TOKEN
-cp /tmp/status.before.json data/status.json
-
-# Workflow YAML (local parse; do not dispatch)
-ruby -ryaml -e 'ARGV.each { |f| YAML.load_file(f); puts "OK #{f}" }' .github/workflows/*.yml .github/zizmor.yml
-
-# Workflow linting (if installed)
-actionlint .github/workflows/*.yml
-zizmor --config .github/zizmor.yml .github/workflows/
-```
-
-**Responsive Testing:** Verify at 320, 375, 430, 768, 1024, 1440px in both themes.
-
----
-
-## Mandatory Pre-Change Investigation
-
-Before ANY modification:
-
-1. Read this `AGENTS.md`
-2. Read relevant `docs/` files for the change area
-3. Inspect the actual implementation files
-4. Check `git status` and recent commits
-5. Understand existing functionality — do not assume
-
----
-
-## Mandatory Regression Testing
-
-After ANY change:
-
-- [ ] Local server loads without console errors
-- [ ] Static validation passes (`node --check`, `jq`, schema validator, html-validate, csstree-validator)
-- [ ] Theme toggle works (both themes, persistence)
-- [ ] Manual refresh works (success, error, timeout states)
-- [ ] Auto-refresh interval fires (check Network tab)
-- [ ] Pipeline detail dialog opens with jobs/history; "View on GitHub" uses the correct run URL
-- [ ] Three repository cards render in the expected layout
-- [ ] Responsive: no horizontal overflow at 6 release widths
-- [ ] Footer visitor IP shows (or "Unavailable" gracefully)
-- [ ] Footer release version matches `package.json` (no hardcoded version)
-- [ ] Print styles hide interactive elements
-- [ ] `data/status.json` validates with `jq` and `scripts/validate-status-json.js`
-- [ ] GitHub Actions workflow YAML parses locally
-
----
-
-## Documentation Update Requirements
-
-Update the corresponding `docs/` file when changing:
-
-| Change Area | Documentation to Update |
-|-------------|------------------------|
-| Frontend UI (HTML/CSS/JS) | `docs/architecture/APPLICATION_ARCHITECTURE.md`, `docs/development/CODING_STANDARDS.md` |
-| Collector logic | `docs/architecture/DATA_FLOW.md`, `docs/operations/TROUBLESHOOTING.md` |
-| GitHub Actions workflows | `docs/deployment/GITHUB_ACTIONS.md`, `docs/deployment/DEPLOYMENT_GUIDE.md` |
-| CI / security scanning | `docs/deployment/GITHUB_ACTIONS.md`, `docs/development/TESTING_GUIDE.md` |
-| Status JSON schema | `docs/architecture/DATA_FLOW.md`, `scripts/validate-status-json.js` |
-| Theme handling | `docs/architecture/APPLICATION_ARCHITECTURE.md` |
-| Deployment process | `docs/deployment/DEPLOYMENT_GUIDE.md`, `docs/deployment/ROLLOVER_GUIDE.md` |
-| Release version | `package.json` only (never hardcode in HTML/JS) |
-
----
-
-## Git and Release Safety Rules
-
-- **NEVER** commit, push, deploy, modify GitHub secrets, change schedules, or trigger production workflows without explicit user authorization
-- **NEVER** include tokens, credentials, or secret values in documentation or code
-- **ALWAYS** verify `git status` is clean before reporting completion (no `.bak`, temp files, debug code)
-- **ALWAYS** check for broken internal links in documentation
-- **Release boundary**: Implementation stops at "ready for review"; user authorizes merge/deploy
-
----
-
-## Quick Reference: Key Files
-
-| Purpose | File |
-|---------|------|
-| Collector schedule | `.github/workflows/collect-status.yml` (Backend event push + cron: `*/30 * * * *`) |
-| Collector script | `.github/scripts/collect-status.sh` |
-| Pages deployment | `.github/workflows/deploy-pages.yml` (quality-gated `workflow_run`) |
-| Security scanning | `.github/workflows/security-scan.yml`, `.github/zizmor.yml` |
-| Data schema | `data/status.json` (schemaVersion: 2) + `scripts/validate-status-json.js` |
-| Theme variables | `css/style.css` (`:root` + `[data-theme="dark"]`) |
-| Auto-refresh interval | `js/app.js` (`REFRESH_INTERVAL_MS = 60000`) |
-| Stale threshold | `js/api.js` (`STALE_THRESHOLD_MS = 600000`) |
-| Monitored repos | `.github/scripts/collect-status.sh` (`MONITORED_REPOS` array) |
-| History depth | `.github/scripts/collect-status.sh` (`MAX_RUNS_PER_WORKFLOW=5`) |
-| Release version | `package.json` (`version`) |
-| GitHub PAT secret | `ATHMETRY_GITHUB_TOKEN` (repo Actions secret) |
-
----
-
-## Known Limitations (Documented, Not Bugs)
-
-- No committed browser test suite (static validation + manual verification only)
-- Collector depends on `gh` CLI and `jq` (GitHub-hosted runners only)
-- IP lookup uses external service (ipwho.is) — may fail/be blocked
-- No authentication on dashboard (public GitHub Pages)
-- Single branch monitoring (`main` only, configured in collector)
-- Stale threshold (10 min) is independent of the 30-minute fallback schedule; Backend events normally trigger prompt collection
-- Manual Refresh fetches published JSON only; does NOT trigger collector
-- Deployment is gated on Security Scan and uses `workflow_run` (not `push`) because `GITHUB_TOKEN` pushes do not trigger push-based workflows
-- Collector-triggered deployments are allowed only when the revision differs from the last security-validated revision solely by `data/status.json`
-- `security-scan.yml` runs on PR, push to `main`, weekly schedule, and manual dispatch
-- CNAME empty — custom domain `status.athmetry.com` not configured
-
----
-
-## Agent Workflow Summary
-
-**Step 1 — Understand**: Read AGENTS.md → relevant docs → inspect code → check git status
-**Step 2 — Plan**: Identify files, dependencies, regressions, tests, doc updates
-**Step 3 — Implement**: Follow conventions, avoid duplication, preserve compatibility
-**Step 4 — Test**: Execute actual tests, verify responsive, check console/network
-**Step 5 — Review**: Full git diff, no temp files, no broken links, no feature loss
-**Step 6 — Document**: Update relevant `docs/` files
-**Step 7 — Report**: What changed, why, files, test results, limitations, risks
-**Step 8 — Release Boundary**: Stop. Await user authorization for commit/push/deploy.
+1. **Tier 1 (Session Start):** Read [`AGENTS.md`](AGENTS.md), [`PROJECT_STATE.md`](PROJECT_STATE.md), and [`MEMORY.md`](MEMORY.md).
+2. **Tier 2 (On-Demand):** Consult [`docs/README.md`](docs/README.md) and load only the single reference needed (`ARCHITECTURE.md`, `DATA_FLOW.md`, `CI_CD_AND_DEPLOYMENT.md`, `DEVELOPMENT_AND_TESTING.md`, `OPERATIONS.md`).
+3. **Tier 3 (Archive):** Historical audits live in [`docs/archive/README.md`](docs/archive/README.md); do not load for routine tasks.
+- **Task skills (`.agent/skills/`):** `frontend-development`, `github-actions`, `production-release`, `repository-investigation`, `testing-and-regression`.

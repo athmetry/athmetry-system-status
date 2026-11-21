@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify the Collect System Status workflow trigger contract.
+# Verify the Collect System Status workflow trigger and security contract.
 # This test does not dispatch workflows or contact GitHub.
 
 set -euo pipefail
@@ -18,18 +18,24 @@ ruby -ryaml -e '
 
   abort "workflow_dispatch must remain enabled" unless triggers.key?("workflow_dispatch")
 
-  push = triggers.fetch("push")
-  abort "push must be restricted to main" unless push["branches"] == ["main"]
-  abort "push path must include backend and frontend events" unless push["paths"] == ["data/status-events/backend.json", "data/status-events/frontend.json"]
-  abort "data/status.json must not trigger collection" if push.fetch("paths", []).include?("data/status.json")
+  abort "premature push trigger must not be enabled on collector" if triggers.key?("push")
+
+  workflow_run = triggers.fetch("workflow_run")
+  abort "workflow_run must be restricted to main" unless workflow_run["branches"] == ["main"]
+  abort "workflow_run must trigger on completed only" unless workflow_run["types"] == ["completed"]
+  abort "workflow_run workflows must match CI Integration Tests and Security Scan" unless workflow_run["workflows"] == ["CI Integration Tests", "Security Scan"]
+  abort "collector must not trigger itself via workflow_run" if workflow_run.fetch("workflows", []).include?("Collect System Status")
+  abort "deploy workflow must not trigger collector via workflow_run" if workflow_run.fetch("workflows", []).include?("Deploy to GitHub Pages")
 
   concurrency = workflow.fetch("concurrency")
   abort "collector concurrency group changed" unless concurrency["group"] == "collect-status"
   abort "collector concurrency policy changed" unless concurrency["cancel-in-progress"] == false
 
-  abort "collector permissions changed" unless workflow.fetch("permissions") == {"contents" => "write"}
+  abort "workflow permissions must be least-privilege read" unless workflow.fetch("permissions") == {"contents" => "read"}
+  collect_job = workflow.fetch("jobs").fetch("collect")
+  abort "collect job permissions must be contents: write" unless collect_job.fetch("permissions") == {"contents" => "write"}
 ' "${WORKFLOW_FILE}"
 
-echo "✓ PASS: Collector triggers are schedule, workflow_dispatch, and Backend/Frontend-event push only"
-echo "✓ PASS: Push trigger is restricted to main and data/status-events/backend.json, data/status-events/frontend.json"
-echo "✓ PASS: 30-minute schedule, concurrency, and permissions are preserved"
+echo "✓ PASS: Collector triggers on completed CI Integration Tests and Security Scan workflow_run on main, 30-min schedule, and workflow_dispatch"
+echo "✓ PASS: Premature push trigger and self/deploy loop triggers are absent"
+echo "✓ PASS: Concurrency (cancel-in-progress: false) and least-privilege permissions are preserved"

@@ -1,0 +1,16 @@
+# Athmetry System Status — Project State
+
+**Last Verified:** 2026-11-21 | **Base `main` Head:** `62607cb`
+**Stage:** Production v1.0 Live on GitHub Pages — Commit-Completion Pipeline Reporting & 3-Tier Context Hierarchy Active
+
+## Implemented & Verified on `main`
+
+- **Static Dashboard (`index.html`, `css/style.css`, `js/{app,api,dashboard}.js`):** Three-card monitoring layout (`athmetry-backend`, `athmetry-system-status`, `athmetry-frontend`), overall health banner + last successful build, per-workflow rows with pipeline detail dialog (job breakdown, commit metadata, 5-run history, GitHub confirmation dialog), light/dark theme with pre-paint inline script and `localStorage` persistence (`athmetry-theme`), 60s auto-refresh, cache-busted manual refresh with 1.5s minimum scroll-locked loading overlay and last-valid-data fallback, 10-min stale warning banner, non-blocking `ipwho.is` visitor info (5s timeout), dynamic footer version from `package.json`, print stylesheet, and zero horizontal overflow across `320, 375, 430, 768, 1024, 1440px`.
+- **Collector & Event Integration (`.github/scripts/collect-status.sh`, `data/status.json`):** Schema v2 collector discovering active workflows and up to 5 runs per workflow on `main`; Backend (`data/status-events/backend.json`) and Frontend (`data/status-events/frontend.json`) status-event consumption with strict schema, identity, and stale-event (`sourceRunId`/`sourceRunAttempt`) validation; commit-settlement waiting (`wait_for_commit_workflows`) for peer `ci-test.yml` and `security-scan.yml` runs on `TRIGGER_HEAD_SHA`; self-monitoring via `status=completed` with active `GITHUB_RUN_ID` exclusion; API run-vs-jobs completion lag reconciliation; exclusion of hidden internal workflows (`Athmetry Backend Status Reporter`, `Athmetry Frontend Status Reporter`, `Deploy to GitHub Pages`) from `repo.overallStatus`; duplicate `workflow_run` idempotency guard.
+- **CI/CD & Security (`.github/workflows/`, `.github/zizmor.yml`):** Four workflows — `collect-status.yml` (`workflow_run` on completed `CI Integration Tests` / `Security Scan` on `main` + `*/30` cron + `workflow_dispatch`), `deploy-pages.yml` (quality-gated on `Security Scan` lineage via `workflow_run`), `security-scan.yml` (`gitleaks` `8.30.1` + `zizmor` `1.32.0`), and `ci-test.yml` (`npm run test:integration`).
+- **Verified Check Baseline:** `npm run test:integration` passes `6` suites (`20` backend event + `30` frontend event + `3` workflow trigger contract + `4` collector preservation + `9` collector status accuracy/settlement + `53` dashboard filtering/resolution/API assertions = `119` checks); `npm run test:browser` passes `11` Playwright specs (`manual-refresh.spec.js`); `zizmor`, `html-validate`, `csstree-validator`, `node --check`, and `validate-status-json.js` exit `0`.
+
+## Known Limitations & Deferred Scope
+
+- **Custom Domain (`CNAME`):** Empty and reserved for `status.athmetry.com`; do not populate until DNS is configured.
+- **Architectural Boundaries:** Public unauthenticated GitHub Pages site; monitors `main` branch only; stores up to 5 runs per workflow in Git without a time-series database; visitor IP lookup depends on external `ipwho.is`; GitHub Free cron schedules (`*/30 * * * *`) experience runner throttling (mitigated by `workflow_run` event-driven collection).

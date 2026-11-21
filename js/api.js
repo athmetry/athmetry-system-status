@@ -12,6 +12,50 @@ const FETCH_TIMEOUT_MS = 10000;
 // Expected schema version
 const EXPECTED_SCHEMA_VERSION = 2;
 
+const INTERNAL_REPORTER_WORKFLOWS = new Set([
+  'Athmetry Backend Status Reporter',
+  'Athmetry Frontend Status Reporter'
+]);
+
+/**
+ * Return true when a workflow is an internal reporter or self-deployment
+ * pipeline that must not affect repository overallStatus.
+ */
+export function isHiddenInternalWorkflow(repoName, workflowName) {
+  if (INTERNAL_REPORTER_WORKFLOWS.has(workflowName)) return true;
+  if (repoName === 'athmetry-system-status' && workflowName === 'Deploy to GitHub Pages') return true;
+  return false;
+}
+
+/**
+ * Derive dashboard effectiveStatus from GitHub run status and conclusion.
+ */
+export function deriveEffectiveStatus(status, conclusion) {
+  if (status === 'completed') {
+    switch (conclusion) {
+      case 'success':
+      case 'neutral':
+        return 'success';
+      case 'failure':
+      case 'action_required':
+      case 'timed_out':
+      case 'startup_failure':
+        return 'failure';
+      case 'cancelled':
+      case 'stale':
+        return 'cancelled';
+      case 'skipped':
+        return 'skipped';
+      default:
+        return 'unknown';
+    }
+  }
+  if (status === 'in_progress') return 'running';
+  if (['queued', 'waiting', 'requested', 'pending'].includes(status)) return 'queued';
+  if (status === 'failure') return 'failure';
+  return 'unknown';
+}
+
 export class StatusApi {
   constructor() {
     this.lastData = null;
@@ -362,6 +406,9 @@ export class StatusApi {
         const processedWf = await this.processWorkflow(owner, repoName, workflow);
         if (processedWf) {
           processedWorkflows.push(processedWf);
+          if (isHiddenInternalWorkflow(repoName, processedWf.name)) {
+            continue;
+          }
           
           // Update repo overall status
           if (processedWf.effectiveStatus === 'failure') {
@@ -400,8 +447,13 @@ export class StatusApi {
     const workflowState = workflow.state;
     const workflowHtmlUrl = workflow.html_url;
     
+    const isSelfCollector = workflowPath === '.github/workflows/collect-status.yml';
+    const runsQuery = isSelfCollector
+      ? 'branch=main&status=completed&per_page=5'
+      : 'branch=main&per_page=5';
+
     // Fetch latest runs for this workflow
-    const runsUrl = `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/runs?branch=main&per_page=5`;
+    const runsUrl = `https://api.github.com/repos/${owner}/${repoName}/actions/workflows/${workflowId}/runs?${runsQuery}`;
     const runsResponse = await this.fetchWithTimeout(runsUrl);
     
     if (!runsResponse.ok) {
@@ -411,7 +463,12 @@ export class StatusApi {
     const runsData = await runsResponse.json();
     const runs = runsData.workflow_runs || [];
     
-    if (runs.length === 0) {
+    // For collector's own workflow, use only completed runs (never fall back to in_progress)
+    const runsToUse = isSelfCollector
+      ? runs.filter(r => r.status === 'completed' && r.conclusion && r.conclusion !== 'null')
+      : runs;
+
+    if (runsToUse.length === 0) {
       return {
         id: workflowId,
         name: workflowName,
@@ -424,15 +481,6 @@ export class StatusApi {
         latestRun: null,
         history: []
       };
-    }
-    
-    // For collector's own workflow, prefer completed runs (self-monitoring)
-    let runsToUse = runs;
-    if (workflowPath === '.github/workflows/collect-status.yml') {
-      const completedRuns = runs.filter(r => r.status === 'completed');
-      if (completedRuns.length > 0) {
-        runsToUse = completedRuns;
-      }
     }
     
     const latestRun = runsToUse[0];
@@ -474,24 +522,7 @@ export class StatusApi {
     }
     
     // Determine effective status
-    let effectiveStatus = 'unknown';
-    if (latestRun.status === 'completed') {
-      switch (latestRun.conclusion) {
-        case 'success': effectiveStatus = 'success'; break;
-        case 'failure':
-        case 'action_required': effectiveStatus = 'failure'; break;
-        case 'cancelled': effectiveStatus = 'cancelled'; break;
-        case 'timed_out': effectiveStatus = 'failure'; break;
-        case 'skipped': effectiveStatus = 'skipped'; break;
-        default: effectiveStatus = 'unknown';
-      }
-    } else if (latestRun.status === 'in_progress') {
-      effectiveStatus = 'running';
-    } else if (latestRun.status === 'queued') {
-      effectiveStatus = 'queued';
-    } else if (latestRun.status === 'failure') {
-      effectiveStatus = 'failure';
-    }
+    const effectiveStatus = deriveEffectiveStatus(latestRun.status, latestRun.conclusion);
     
     // Build latest run object
     const latestRunObj = {
@@ -509,7 +540,7 @@ export class StatusApi {
     };
     
     // Build history
-    const history = runs.map(run => ({
+    const history = runsToUse.map(run => ({
       runNumber: run.run_number,
       status: run.status,
       conclusion: run.conclusion,
@@ -570,17 +601,7 @@ export class StatusApi {
     // Infer overall status from old schema data
     let overallStatus = 'unknown';
     if (repo.latestRun) {
-      if (repo.latestRun.status === 'completed') {
-        if (repo.latestRun.conclusion === 'success') overallStatus = 'success';
-        else if (repo.latestRun.conclusion === 'failure' || repo.latestRun.conclusion === 'action_required') overallStatus = 'failure';
-        else if (repo.latestRun.conclusion === 'cancelled') overallStatus = 'cancelled';
-        else if (repo.latestRun.conclusion === 'timed_out') overallStatus = 'failure';
-        else if (repo.latestRun.conclusion === 'skipped') overallStatus = 'skipped';
-      } else if (repo.latestRun.status === 'in_progress') {
-        overallStatus = 'running';
-      } else if (repo.latestRun.status === 'queued') {
-        overallStatus = 'queued';
-      }
+      overallStatus = deriveEffectiveStatus(repo.latestRun.status, repo.latestRun.conclusion);
     }
     
     // Convert latestRun to workflows array format

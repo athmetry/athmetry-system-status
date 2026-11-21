@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "test:browser": "playwright test",
-    "test:integration": "bash tests/integration/test_backend_integration.sh && bash tests/integration/test_frontend_integration.sh && bash tests/integration/test_workflow_triggers.sh && bash tests/integration/test_collector_preservation.sh && node tests/integration/test_dashboard_filtering.js"
+    "test:integration": "bash tests/integration/test_backend_integration.sh && bash tests/integration/test_frontend_integration.sh && bash tests/integration/test_workflow_triggers.sh && bash tests/integration/test_collector_preservation.sh && bash tests/integration/test_collector_status_accuracy.sh && node tests/integration/test_dashboard_filtering.js"
   },
   "dependencies": {
     "@playwright/test": "^1.65.0"
