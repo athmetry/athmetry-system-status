@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "collectedAt": "2026-11-21T00:32:18Z",
+  "collectedAt": "2026-11-21T01:02:38Z",
   "monitoredBranch": "main",
   "repositories": [
     {
@@ -750,26 +750,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 44842770652,
-            "runNumber": 14,
+            "runId": 44847631692,
+            "runNumber": 16,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44842770652",
-            "commitSha": "9948db5f46b9392bc637a214ba867f62e0b9c4a0",
-            "commitMessage": "chore(status-event): update frontend pipeline status (run 12)",
-            "commitAuthor": "athmetry",
-            "startedAt": "2026-11-21T00:17:00Z",
-            "completedAt": "2026-11-21T00:17:16Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847631692",
+            "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+            "commitMessage": "fix(status): settle commit pipelines, fix running status display, and optimize docs context (#1)",
+            "commitAuthor": "Md Tausif",
+            "startedAt": "2026-11-21T01:01:43Z",
+            "completedAt": "2026-11-21T01:02:06Z",
             "jobs": [
               {
                 "name": "Integration Tests",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-21T00:17:02Z",
-                "completed_at": "2026-11-21T00:17:16Z"
+                "started_at": "2026-11-21T01:01:45Z",
+                "completed_at": "2026-11-21T01:02:05Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 16,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+              "startedAt": "2026-11-21T01:01:43Z",
+              "completedAt": "2026-11-21T01:02:06Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847631692"
+            },
             {
               "runNumber": 14,
               "status": "completed",
@@ -805,15 +814,6 @@
               "startedAt": "2026-11-20T22:38:56Z",
               "completedAt": "2026-11-20T22:39:12Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44830669039"
-            },
-            {
-              "runNumber": 10,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "2abaaa7e99f209797578408e3c6f4b8fd4921167",
-              "startedAt": "2026-11-20T22:09:36Z",
-              "completedAt": "2026-11-20T22:10:00Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44826570066"
             }
           ]
         },
@@ -829,26 +829,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 44842770486,
-            "runNumber": 64,
+            "runId": 44844473517,
+            "runNumber": 65,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44842770486",
-            "commitSha": "9948db5f46b9392bc637a214ba867f62e0b9c4a0",
-            "commitMessage": "chore(status-event): update frontend pipeline status (run 12)",
-            "commitAuthor": "athmetry",
-            "startedAt": "2026-11-21T00:17:00Z",
-            "completedAt": "2026-11-21T00:17:32Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44844473517",
+            "commitSha": "b89c6e7bea2066726b427f84e36e628bc570f886",
+            "commitMessage": "chore(status): update pipeline status data (2026-11-21T00:17:28Z)",
+            "commitAuthor": "athmetry-status-bot",
+            "startedAt": "2026-11-21T00:32:13Z",
+            "completedAt": "2026-11-21T00:32:42Z",
             "jobs": [
               {
                 "name": "Collect pipeline status",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-21T00:17:02Z",
-                "completed_at": "2026-11-21T00:17:31Z"
+                "started_at": "2026-11-21T00:32:15Z",
+                "completed_at": "2026-11-21T00:32:42Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 65,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "b89c6e7bea2066726b427f84e36e628bc570f886",
+              "startedAt": "2026-11-21T00:32:13Z",
+              "completedAt": "2026-11-21T00:32:42Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44844473517"
+            },
             {
               "runNumber": 64,
               "status": "completed",
@@ -899,33 +908,51 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 44842839604,
-            "runNumber": 93,
+            "runId": 44847672168,
+            "runNumber": 95,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44842839604",
-            "commitSha": "b89c6e7bea2066726b427f84e36e628bc570f886",
-            "commitMessage": "chore(status): update pipeline status data (2026-11-21T00:17:28Z)",
-            "commitAuthor": "athmetry-status-bot",
-            "startedAt": "2026-11-21T00:17:36Z",
-            "completedAt": "2026-11-21T00:18:10Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847672168",
+            "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+            "commitMessage": "fix(status): settle commit pipelines, fix running status display, and optimize docs context (#1)",
+            "commitAuthor": "Md Tausif",
+            "startedAt": "2026-11-21T01:02:05Z",
+            "completedAt": "2026-11-21T01:02:34Z",
             "jobs": [
               {
                 "name": "Verify deployment gate",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-21T00:17:44Z",
-                "completed_at": "2026-11-21T00:17:50Z"
+                "started_at": "2026-11-21T01:02:08Z",
+                "completed_at": "2026-11-21T01:02:13Z"
               },
               {
                 "name": "Deploy static site to GitHub Pages",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-21T00:17:54Z",
-                "completed_at": "2026-11-21T00:18:10Z"
+                "started_at": "2026-11-21T01:02:18Z",
+                "completed_at": "2026-11-21T01:02:33Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 95,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+              "startedAt": "2026-11-21T01:02:05Z",
+              "completedAt": "2026-11-21T01:02:34Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847672168"
+            },
+            {
+              "runNumber": 94,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "62607cbf1602c10714a3f2959965f269e28b5708",
+              "startedAt": "2026-11-21T00:32:47Z",
+              "completedAt": "2026-11-21T00:33:18Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44844532941"
+            },
             {
               "runNumber": 93,
               "status": "completed",
@@ -952,24 +979,6 @@
               "startedAt": "2026-11-20T23:46:14Z",
               "completedAt": "2026-11-20T23:46:50Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44839194994"
-            },
-            {
-              "runNumber": 90,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "e015fd6a1dd094b56f4b83a0f6b1a1093c2d60b9",
-              "startedAt": "2026-11-20T23:46:00Z",
-              "completedAt": "2026-11-20T23:46:26Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44839165827"
-            },
-            {
-              "runNumber": 89,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "2b5ec056085507313d12447b709177674b5cb400",
-              "startedAt": "2026-11-20T23:12:30Z",
-              "completedAt": "2026-11-20T23:13:27Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44835063244"
             }
           ]
         },
@@ -985,26 +994,35 @@
           "latestRun": {
             "status": "completed",
             "conclusion": "success",
-            "runId": 44842770573,
-            "runNumber": 29,
+            "runId": 44847631648,
+            "runNumber": 31,
             "runAttempt": 1,
-            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44842770573",
-            "commitSha": "9948db5f46b9392bc637a214ba867f62e0b9c4a0",
-            "commitMessage": "chore(status-event): update frontend pipeline status (run 12)",
-            "commitAuthor": "athmetry",
-            "startedAt": "2026-11-21T00:17:00Z",
-            "completedAt": "2026-11-21T00:17:09Z",
+            "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847631648",
+            "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+            "commitMessage": "fix(status): settle commit pipelines, fix running status display, and optimize docs context (#1)",
+            "commitAuthor": "Md Tausif",
+            "startedAt": "2026-11-21T01:01:43Z",
+            "completedAt": "2026-11-21T01:02:01Z",
             "jobs": [
               {
                 "name": "Scan for secrets and workflow misconfigurations",
                 "status": "completed",
                 "conclusion": "success",
-                "started_at": "2026-11-21T00:17:02Z",
-                "completed_at": "2026-11-21T00:17:08Z"
+                "started_at": "2026-11-21T01:01:46Z",
+                "completed_at": "2026-11-21T01:02:01Z"
               }
             ]
           },
           "history": [
+            {
+              "runNumber": 31,
+              "status": "completed",
+              "conclusion": "success",
+              "commitSha": "cfc46dfeb57a1ab0233dfaaa17d058c48547bbb9",
+              "startedAt": "2026-11-21T01:01:43Z",
+              "completedAt": "2026-11-21T01:02:01Z",
+              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44847631648"
+            },
             {
               "runNumber": 29,
               "status": "completed",
@@ -1040,15 +1058,6 @@
               "startedAt": "2026-11-20T22:38:56Z",
               "completedAt": "2026-11-20T22:39:06Z",
               "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44830669073"
-            },
-            {
-              "runNumber": 25,
-              "status": "completed",
-              "conclusion": "success",
-              "commitSha": "2abaaa7e99f209797578408e3c6f4b8fd4921167",
-              "startedAt": "2026-11-20T22:09:36Z",
-              "completedAt": "2026-11-20T22:09:46Z",
-              "runUrl": "https://github.com/athmetry/athmetry-system-status/actions/runs/44826569992"
             }
           ]
         }
