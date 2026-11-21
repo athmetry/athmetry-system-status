@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "a0b4ad0eeb25c6b3e8ca14da8c4499188266a7f4",
-      "message": "feat(proxy): add same-origin /api/v1 rewrite proxy in next.config.ts",
-      "author": "mdtausif1"
+      "sha": "181f0b46eaaa883664659561f4c50019590d5ffd",
+      "message": "Merge pull request #2 from athmetry/ci/vercel-production-deploy",
+      "author": "athmetry"
     },
     "workflow": {
       "name": "Athmetry Frontend CI",
-      "runId": 44941411047,
-      "runNumber": 13,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/44941411047",
+      "runId": 44947344824,
+      "runNumber": 15,
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/44947344824",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-21T19:31:48Z",
-      "completedAt": "2026-11-21T19:33:31Z",
+      "triggeredAt": "2026-11-21T20:38:28Z",
+      "completedAt": "2026-11-21T20:40:04Z",
       "jobs": [
         {
-          "completed_at": "2026-11-21T19:33:31Z",
+          "completed_at": "2026-11-21T20:40:04Z",
           "conclusion": "success",
           "name": "ci",
-          "started_at": "2026-11-21T19:31:50Z",
+          "started_at": "2026-11-21T20:38:30Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-21T19:33:38Z",
+    "reportedAt": "2026-11-21T20:40:16Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-21T19:33:39Z",
-    "sourceRunId": 44941411047,
+    "reportedAt": "2026-11-21T20:40:16Z",
+    "sourceRunId": 44947344824,
     "sourceRunAttempt": 1,
     "version": 1
   }
