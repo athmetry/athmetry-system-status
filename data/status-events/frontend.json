@@ -5,37 +5,37 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "60cde206537072457831fdb4ec1c0fd5c70e5e35",
-      "message": "docs: correct committed state and route counts",
-      "author": "mdtausif1"
+      "sha": "71e9326dd37397636cc400e1f1a2789a34835c12",
+      "message": "docs(frontend): optimize AI context hierarchy and clean up workspace (#1)",
+      "author": "Md Tausif"
     },
     "workflow": {
       "name": "Athmetry Frontend CI",
-      "runId": 43722386997,
-      "runNumber": 10,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/43722386997",
+      "runId": 44842582878,
+      "runNumber": 12,
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/44842582878",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-15T14:05:01Z",
-      "completedAt": "2026-11-15T14:06:27Z",
+      "triggeredAt": "2026-11-21T00:15:21Z",
+      "completedAt": "2026-11-21T00:16:47Z",
       "jobs": [
         {
-          "completed_at": "2026-11-15T14:06:26Z",
+          "completed_at": "2026-11-21T00:16:46Z",
           "conclusion": "success",
           "name": "ci",
-          "started_at": "2026-11-15T14:05:03Z",
+          "started_at": "2026-11-21T00:15:23Z",
           "status": "completed"
         }
       ]
     },
-    "reportedAt": "2026-11-15T14:06:36Z",
+    "reportedAt": "2026-11-21T00:16:56Z",
     "source": "workflow_run"
   },
   "meta": {
-    "reportedAt": "2026-11-15T14:06:36Z",
-    "sourceRunId": 43722386997,
+    "reportedAt": "2026-11-21T00:16:57Z",
+    "sourceRunId": 44842582878,
     "sourceRunAttempt": 1,
     "version": 1
   }
