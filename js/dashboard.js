@@ -54,20 +54,40 @@ const REPO_KEYS = {
 
 const STATUS_COLORS = {
   success: 'success',
+  completed: 'success',
+  neutral: 'success',
   failure: 'failure',
+  timed_out: 'failure',
+  action_required: 'failure',
+  startup_failure: 'failure',
   running: 'running',
+  in_progress: 'running',
   queued: 'queued',
+  waiting: 'queued',
+  requested: 'queued',
+  pending: 'queued',
   cancelled: 'cancelled',
+  stale: 'cancelled',
   skipped: 'skipped',
   unknown: 'unknown'
 };
 
 const STATUS_LABELS = {
   success: 'Success',
+  completed: 'Completed',
+  neutral: 'Neutral',
   failure: 'Failure',
+  timed_out: 'Timed Out',
+  action_required: 'Action Required',
+  startup_failure: 'Startup Failure',
   running: 'Running',
+  in_progress: 'Running',
   queued: 'Queued',
+  waiting: 'Queued',
+  requested: 'Queued',
+  pending: 'Queued',
   cancelled: 'Cancelled',
+  stale: 'Stale',
   skipped: 'Skipped',
   unknown: 'Unknown'
 };
@@ -181,13 +201,13 @@ function calculateDuration(startedAt, completedAt) {
 }
 
 /** Escape HTML to prevent XSS. */
-function escapeHtml(text) {
+export function escapeHtml(text) {
   if (!text) return '';
   return String(text)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
 
@@ -202,13 +222,79 @@ function unlockBodyScroll() {
 }
 
 /** Get CSS class for a status. */
-function getStatusClass(status) {
+export function getStatusClass(status) {
   return STATUS_COLORS[status] || 'unknown';
 }
 
 /** Get display label for a status. */
-function getStatusLabel(status) {
+export function getStatusLabel(status) {
   return STATUS_LABELS[status] || 'Unknown';
+}
+
+/**
+ * Resolve the authoritative effective status for a workflow.
+ * Reconciles completed latestRun metadata so a finished run is never
+ * displayed as Running if effectiveStatus is stale or missing.
+ */
+export function resolveEffectiveStatus(workflow) {
+  if (!workflow || typeof workflow !== 'object') return 'unknown';
+  const latestRun = workflow.latestRun;
+  if (
+    latestRun &&
+    latestRun.status === 'completed' &&
+    typeof latestRun.conclusion === 'string' &&
+    latestRun.conclusion.length > 0 &&
+    latestRun.conclusion !== 'unknown' &&
+    latestRun.conclusion !== 'null'
+  ) {
+    switch (latestRun.conclusion) {
+      case 'success':
+      case 'neutral':
+        return 'success';
+      case 'failure':
+      case 'action_required':
+      case 'timed_out':
+      case 'startup_failure':
+        return 'failure';
+      case 'cancelled':
+      case 'stale':
+        return 'cancelled';
+      case 'skipped':
+        return 'skipped';
+      default:
+        break;
+    }
+  }
+
+  if (typeof workflow.effectiveStatus === 'string' && workflow.effectiveStatus.length > 0) {
+    return workflow.effectiveStatus;
+  }
+
+  const latestStatus = latestRun?.status || workflow.latestStatus;
+  const latestConclusion = latestRun?.conclusion || workflow.latestConclusion;
+  if (latestStatus === 'completed') {
+    switch (latestConclusion) {
+      case 'success':
+      case 'neutral':
+        return 'success';
+      case 'failure':
+      case 'action_required':
+      case 'timed_out':
+      case 'startup_failure':
+        return 'failure';
+      case 'cancelled':
+      case 'stale':
+        return 'cancelled';
+      case 'skipped':
+        return 'skipped';
+      default:
+        return 'unknown';
+    }
+  }
+  if (latestStatus === 'in_progress') return 'running';
+  if (['queued', 'waiting', 'requested', 'pending'].includes(latestStatus)) return 'queued';
+  if (latestStatus === 'failure') return 'failure';
+  return 'unknown';
 }
 
 /** Create a status pill element. */
@@ -228,7 +314,7 @@ function createPipelineRow(workflow, repoName) {
   row.dataset.workflowId = workflow.id;
   row.dataset.repoName = repoName;
 
-  const effectiveStatus = workflow.effectiveStatus || 'unknown';
+  const effectiveStatus = resolveEffectiveStatus(workflow);
   const statusClass = getStatusClass(effectiveStatus);
 
   // Latest run info
@@ -287,11 +373,12 @@ function createPipelineDetailContent(workflow, repoName) {
 
   // Jobs from latest run
   const jobs = latestRun?.jobs || [];
+  const effectiveStatus = resolveEffectiveStatus(workflow);
 
   let html = `
     <div class="detail-header">
       <div class="detail-status">
-        ${createStatusPill(workflow.effectiveStatus || 'unknown', getStatusLabel(workflow.effectiveStatus || 'unknown'), 'detail-status-pill').outerHTML}
+        ${createStatusPill(effectiveStatus, getStatusLabel(effectiveStatus), 'detail-status-pill').outerHTML}
       </div>
       <div class="detail-title">
         <h3>${escapeHtml(workflow.name)}</h3>
@@ -485,7 +572,7 @@ export function calculateOverallStatus(workflows) {
   let hasData = false;
 
   workflows.forEach(wf => {
-    const effStatus = wf.effectiveStatus;
+    const effStatus = resolveEffectiveStatus(wf);
     if (effStatus === 'failure') {
       hasFailure = true;
       hasData = true;
@@ -541,7 +628,8 @@ function renderOverallStatus(data) {
 
     // Find latest successful build time
     workflows.forEach(wf => {
-      if (wf.latestRun && wf.latestConclusion === 'success' && wf.latestRun.completedAt) {
+      const isSuccess = wf.latestRun?.conclusion === 'success' || wf.latestConclusion === 'success';
+      if (wf.latestRun && isSuccess && wf.latestRun.completedAt) {
         const time = new Date(wf.latestRun.completedAt).getTime();
         if (!latestSuccessTime || time > latestSuccessTime) {
           latestSuccessTime = time;

@@ -16,10 +16,14 @@
 #   - Preserves workflow history and last successful build
 #
 # Self-monitoring: the system-status repository's own collector workflow is
-# included as a monitored pipeline. Because a collector run always observes
-# itself as in_progress, the most recent *completed* run is reported instead,
-# which keeps failed collector executions visible without pinning the
-# dashboard to "Running".
+# included as a monitored pipeline. It queries completed runs only and excludes
+# the currently executing run ID so active or queued collector runs never report
+# "Running", while completed failures remain visible.
+#
+# Commit-completion reporting: when invoked via workflow_run for a main-branch
+# commit push, waits briefly for peer push workflows (ci-test.yml,
+# security-scan.yml) on the triggering commit SHA to reach a terminal state and
+# reconciles API run-vs-jobs completion lag before writing data/status.json.
 #
 # Requires:
 #   - gh CLI (pre-installed on GitHub-hosted runners)
@@ -39,6 +43,11 @@ EVENT_FILE="data/status-events/backend.json"
 FRONTEND_EVENT_FILE="data/status-events/frontend.json"
 COLLECTED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 MAX_RUNS_PER_WORKFLOW=5
+SETTLE_MAX_WAIT_SECONDS="${SETTLE_MAX_WAIT_SECONDS:-300}"
+SETTLE_POLL_INTERVAL_SECONDS="${SETTLE_POLL_INTERVAL_SECONDS:-5}"
+SETTLE_DISCOVERY_GRACE_SECONDS="${SETTLE_DISCOVERY_GRACE_SECONDS:-30}"
+RUN_RECONCILE_DELAY_SECONDS="${RUN_RECONCILE_DELAY_SECONDS:-2}"
+SYSTEM_STATUS_COMMIT_WORKFLOWS=("ci-test.yml" "security-scan.yml")
 
 # Repositories to monitor. Add entries here to monitor additional repos.
 # Format: "repo_name owner repo" (owner/repo usually the same as name).
@@ -89,6 +98,219 @@ log() {
   local level="${1:-INFO}"
   local message="${2:-}"
   printf '[%s] %s: %s\n' "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$level" "$message" >&2
+}
+
+# Map GitHub Actions workflow status and conclusion to dashboard effectiveStatus.
+derive_effective_status() {
+  local wf_status="${1:-}"
+  local wf_conclusion="${2:-}"
+
+  if [[ "$wf_status" == "completed" ]]; then
+    case "$wf_conclusion" in
+      success|neutral) printf '%s' "success" ;;
+      failure|action_required|timed_out|startup_failure) printf '%s' "failure" ;;
+      cancelled|stale) printf '%s' "cancelled" ;;
+      skipped) printf '%s' "skipped" ;;
+      *) printf '%s' "unknown" ;;
+    esac
+  elif [[ "$wf_status" == "in_progress" ]]; then
+    printf '%s' "running"
+  elif [[ "$wf_status" == "queued" || "$wf_status" == "waiting" || "$wf_status" == "requested" || "$wf_status" == "pending" ]]; then
+    printf '%s' "queued"
+  elif [[ "$wf_status" == "failure" ]]; then
+    printf '%s' "failure"
+  else
+    printf '%s' "unknown"
+  fi
+}
+
+# Return 0 when a workflow is internal/presentation-hidden and must not affect
+# the repository's overallStatus calculation (while remaining in workflows[]).
+is_hidden_from_overall_status() {
+  local repo_name="${1:-}"
+  local wf_name="${2:-}"
+
+  case "$wf_name" in
+    "Athmetry Backend Status Reporter"|"Athmetry Frontend Status Reporter")
+      return 0
+      ;;
+  esac
+
+  if [[ "$repo_name" == "athmetry-system-status" && "$wf_name" == "Deploy to GitHub Pages" ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Derive overall repo status from collected workflows while excluding internal
+# reporter and self-deployment workflows.
+compute_repo_overall_status() {
+  local repo_name="${1:-}"
+  local workflows_json="${2:-[]}"
+  local repo_overall_status="unknown"
+
+  if [[ "$workflows_json" != "[]" ]]; then
+    local has_failure=false has_running=false any_data=false
+    while IFS= read -r wf; do
+      [[ -z "$wf" ]] && continue
+      local wf_name eff_status
+      wf_name=$(printf '%s' "$wf" | jq -r '.name // ""')
+      if is_hidden_from_overall_status "$repo_name" "$wf_name"; then
+        continue
+      fi
+      eff_status=$(printf '%s' "$wf" | jq -r '.effectiveStatus // "unknown"')
+      if [[ "$eff_status" == "failure" ]]; then
+        has_failure=true
+        any_data=true
+      elif [[ "$eff_status" == "running" ]] || [[ "$eff_status" == "queued" ]]; then
+        has_running=true
+        any_data=true
+      elif [[ "$eff_status" == "success" ]]; then
+        any_data=true
+      fi
+    done <<< "$(printf '%s' "$workflows_json" | jq -c '.[]')"
+
+    if [[ "$any_data" == "true" ]]; then
+      if [[ "$has_failure" == "true" ]]; then
+        repo_overall_status="failure"
+      elif [[ "$has_running" == "true" ]]; then
+        repo_overall_status="running"
+      else
+        repo_overall_status="success"
+      fi
+    fi
+  fi
+
+  printf '%s' "$repo_overall_status"
+}
+
+# Wait for push-triggered peer workflows on athmetry-system-status for a commit
+# SHA to reach a terminal state before collecting data/status.json.
+wait_for_commit_workflows() {
+  local target_sha="${1:-}"
+  if [[ -z "$target_sha" ]] || ! validate_commit_sha "$target_sha"; then
+    return 0
+  fi
+
+  local pending_workflows=("${SYSTEM_STATUS_COMMIT_WORKFLOWS[@]}")
+  local start_epoch
+  start_epoch=$(date +%s)
+
+  log "INFO" "Waiting for commit ${target_sha} pipelines to settle (${pending_workflows[*]})"
+
+  while [[ ${#pending_workflows[@]} -gt 0 ]]; do
+    local now_epoch elapsed
+    now_epoch=$(date +%s)
+    elapsed=$((now_epoch - start_epoch))
+
+    local next_pending=()
+    local wf_file
+    for wf_file in "${pending_workflows[@]}"; do
+      local runs_payload latest_run run_status run_conclusion
+      if runs_payload=$(gh_api \
+        "/repos/${REPO_OWNER}/athmetry-system-status/actions/workflows/${wf_file}/runs?head_sha=${target_sha}&branch=${BRANCH}&event=push&per_page=10" \
+        --jq '.' 2>/dev/null) && [[ -n "${runs_payload:-}" ]]; then
+        latest_run=$(printf '%s' "$runs_payload" | jq -c '
+          (.workflow_runs // [])
+          | sort_by(-(.run_number // 0), -(.run_attempt // 1), -(.id // 0))
+          | .[0] // null
+        ')
+      else
+        latest_run="null"
+      fi
+
+      if [[ "$latest_run" != "null" ]] && [[ -n "${latest_run:-}" ]]; then
+        run_status=$(printf '%s' "$latest_run" | jq -r '.status // ""')
+        run_conclusion=$(printf '%s' "$latest_run" | jq -r '.conclusion // ""')
+        if [[ "$run_status" == "completed" ]] && [[ -n "$run_conclusion" ]] && [[ "$run_conclusion" != "null" ]]; then
+          log "INFO" "Workflow ${wf_file} settled for commit ${target_sha} (conclusion=${run_conclusion})"
+          continue
+        fi
+      elif [[ "$elapsed" -ge "$SETTLE_DISCOVERY_GRACE_SECONDS" ]]; then
+        log "WARN" "Workflow ${wf_file} not discovered for commit ${target_sha} after ${elapsed}s; continuing"
+        continue
+      fi
+
+      next_pending+=("$wf_file")
+    done
+
+    if [[ ${#next_pending[@]} -eq 0 ]]; then
+      pending_workflows=()
+      break
+    fi
+    pending_workflows=("${next_pending[@]}")
+
+    now_epoch=$(date +%s)
+    elapsed=$((now_epoch - start_epoch))
+    if [[ "$elapsed" -ge "$SETTLE_MAX_WAIT_SECONDS" ]]; then
+      log "WARN" "Timed out after ${elapsed}s waiting for commit ${target_sha} workflows (${pending_workflows[*]})"
+      break
+    fi
+
+    if [[ "$SETTLE_POLL_INTERVAL_SECONDS" -gt 0 ]]; then
+      local remaining sleep_seconds
+      remaining=$((SETTLE_MAX_WAIT_SECONDS - elapsed))
+      sleep_seconds="$SETTLE_POLL_INTERVAL_SECONDS"
+      if [[ "$remaining" -lt "$sleep_seconds" ]]; then
+        sleep_seconds="$remaining"
+      fi
+      sleep "$sleep_seconds"
+    fi
+  done
+}
+
+# Return 0 when a workflow_run trigger re-runs for a commit whose settled
+# CI + Security results are already published identically (ignoring volatile
+# collector self-history, Deploy to GitHub Pages, and collectedAt).
+is_duplicate_commit_publish() {
+  local existing_file="${1:-}"
+  local new_file="${2:-}"
+  local trigger_sha="${3:-}"
+
+  if [[ ! -f "$existing_file" ]] || [[ ! -f "$new_file" ]] || [[ -z "$trigger_sha" ]]; then
+    return 1
+  fi
+
+  local already_settled
+  already_settled=$(jq -r --arg sha "$trigger_sha" '
+    ([.repositories[]? | select(.name == "athmetry-system-status") | .workflows[]?
+      | select((.path == ".github/workflows/ci-test.yml" or .path == ".github/workflows/security-scan.yml")
+               and .latestStatus == "completed"
+               and .latestRun.commitSha == $sha)] | length) == 2
+  ' "$existing_file" 2>/dev/null || echo "false")
+
+  if [[ "$already_settled" != "true" ]]; then
+    return 1
+  fi
+
+  local norm_filter='
+    del(.collectedAt)
+    | .repositories |= map(
+        if .name == "athmetry-system-status" then
+          .workflows |= (
+            map(
+              if .path == ".github/workflows/deploy-pages.yml" then empty
+              elif .path == ".github/workflows/collect-status.yml" then
+                {id, name, path, state, effectiveStatus}
+              else .
+              end
+            )
+          )
+        else .
+        end
+      )
+  '
+
+  local existing_norm new_norm
+  existing_norm=$(jq -cS "$norm_filter" "$existing_file" 2>/dev/null || echo "")
+  new_norm=$(jq -cS "$norm_filter" "$new_file" 2>/dev/null || echo "")
+
+  if [[ -n "$existing_norm" ]] && [[ "$existing_norm" == "$new_norm" ]]; then
+    return 0
+  fi
+
+  return 1
 }
 
 # Validate commit SHA: exactly 40 hexadecimal characters.
@@ -397,24 +619,7 @@ merge_backend_event() {
 
   # Determine effective status from workflow status and conclusion
   local effective_status
-  if [[ "$workflow_status" == "completed" ]]; then
-    case "$workflow_conclusion" in
-      success) effective_status="success" ;;
-      failure|action_required) effective_status="failure" ;;
-      cancelled) effective_status="cancelled" ;;
-      timed_out) effective_status="failure" ;;
-      skipped) effective_status="skipped" ;;
-      *) effective_status="unknown" ;;
-    esac
-  elif [[ "$workflow_status" == "in_progress" ]]; then
-    effective_status="running"
-  elif [[ "$workflow_status" == "queued" ]]; then
-    effective_status="queued"
-  elif [[ "$workflow_status" == "failure" ]]; then
-    effective_status="failure"
-  else
-    effective_status="unknown"
-  fi
+  effective_status=$(derive_effective_status "$workflow_status" "$workflow_conclusion")
 
   # Build latest run object
   local latest_run_json
@@ -518,33 +723,8 @@ merge_backend_event() {
   ')
 
   # Determine overall repo status from merged workflows
-  local repo_overall_status="unknown"
-  if [[ "$merged_workflows" != "[]" ]]; then
-    local has_failure=false has_running=false any_data=false
-    while IFS= read -r wf; do
-      local eff_status
-      eff_status=$(printf '%s' "$wf" | jq -r '.effectiveStatus')
-      if [[ "$eff_status" == "failure" ]]; then
-        has_failure=true
-        any_data=true
-      elif [[ "$eff_status" == "running" ]] || [[ "$eff_status" == "queued" ]]; then
-        has_running=true
-        any_data=true
-      elif [[ "$eff_status" == "success" ]]; then
-        any_data=true
-      fi
-    done <<< "$(printf '%s' "$merged_workflows" | jq -c '.[]')"
-
-    if [[ "$any_data" == "true" ]]; then
-      if [[ "$has_failure" == "true" ]]; then
-        repo_overall_status="failure"
-      elif [[ "$has_running" == "true" ]]; then
-        repo_overall_status="running"
-      else
-        repo_overall_status="success"
-      fi
-    fi
-  fi
+  local repo_overall_status
+  repo_overall_status=$(compute_repo_overall_status "athmetry-backend" "$merged_workflows")
 
   # Build the final merged repo entry
   local merged_repo_json
@@ -817,24 +997,7 @@ merge_frontend_event() {
 
   # Determine effective status from workflow status and conclusion
   local effective_status
-  if [[ "$workflow_status" == "completed" ]]; then
-    case "$workflow_conclusion" in
-      success) effective_status="success" ;;
-      failure|action_required) effective_status="failure" ;;
-      cancelled) effective_status="cancelled" ;;
-      timed_out) effective_status="failure" ;;
-      skipped) effective_status="skipped" ;;
-      *) effective_status="unknown" ;;
-    esac
-  elif [[ "$workflow_status" == "in_progress" ]]; then
-    effective_status="running"
-  elif [[ "$workflow_status" == "queued" ]]; then
-    effective_status="queued"
-  elif [[ "$workflow_status" == "failure" ]]; then
-    effective_status="failure"
-  else
-    effective_status="unknown"
-  fi
+  effective_status=$(derive_effective_status "$workflow_status" "$workflow_conclusion")
 
   # Build latest run object
   local latest_run_json
@@ -938,33 +1101,8 @@ merge_frontend_event() {
   ')
 
   # Determine overall repo status from merged workflows
-  local repo_overall_status="unknown"
-  if [[ "$merged_workflows" != "[]" ]]; then
-    local has_failure=false has_running=false any_data=false
-    while IFS= read -r wf; do
-      local eff_status
-      eff_status=$(printf '%s' "$wf" | jq -r '.effectiveStatus')
-      if [[ "$eff_status" == "failure" ]]; then
-        has_failure=true
-        any_data=true
-      elif [[ "$eff_status" == "running" ]] || [[ "$eff_status" == "queued" ]]; then
-        has_running=true
-        any_data=true
-      elif [[ "$eff_status" == "success" ]]; then
-        any_data=true
-      fi
-    done <<< "$(printf '%s' "$merged_workflows" | jq -c '.[]')"
-
-    if [[ "$any_data" == "true" ]]; then
-      if [[ "$has_failure" == "true" ]]; then
-        repo_overall_status="failure"
-      elif [[ "$has_running" == "true" ]]; then
-        repo_overall_status="running"
-      else
-        repo_overall_status="success"
-      fi
-    fi
-  fi
+  local repo_overall_status
+  repo_overall_status=$(compute_repo_overall_status "athmetry-frontend" "$merged_workflows")
 
   # Build the final merged repo entry
   local merged_repo_json
@@ -1027,25 +1165,29 @@ collect_repo() {
 
           # Fetch latest runs for this workflow
           local runs_payload runs_array="[]"
-          if runs_payload=$(gh_api "/repos/${owner}/${repo}/actions/workflows/${wf_id}/runs?branch=${BRANCH}&per_page=${MAX_RUNS_PER_WORKFLOW}" --jq '.' 2>/dev/null); then
+          if [[ "$repo" == "athmetry-system-status" && "$wf_path" == ".github/workflows/collect-status.yml" ]]; then
+            # Self-monitoring: query completed runs only and exclude the active
+            # run ID so a running or queued burst never reports "Running" and
+            # up to MAX_RUNS_PER_WORKFLOW completed history entries are kept.
+            if runs_payload=$(gh_api "/repos/${owner}/${repo}/actions/workflows/${wf_id}/runs?branch=${BRANCH}&status=completed&per_page=${MAX_RUNS_PER_WORKFLOW}" --jq '.' 2>/dev/null); then
+              if [[ -n "${runs_payload:-}" ]]; then
+                runs_array=$(printf '%s' "$runs_payload" | jq -c \
+                  --arg self_id "${GITHUB_RUN_ID:-}" \
+                  --argjson max "$MAX_RUNS_PER_WORKFLOW" '
+                    [(.workflow_runs // [])[]
+                     | select(.status == "completed"
+                              and .conclusion != null
+                              and .conclusion != ""
+                              and (($self_id == "") or ((.id | tostring) != $self_id)))]
+                    | .[:$max]
+                  ')
+              fi
+            fi
+          elif runs_payload=$(gh_api "/repos/${owner}/${repo}/actions/workflows/${wf_id}/runs?branch=${BRANCH}&per_page=${MAX_RUNS_PER_WORKFLOW}" --jq '.' 2>/dev/null); then
             local runs_total
             runs_total=$(printf '%s' "$runs_payload" | jq -r '.total_count // 0')
             if [[ "$runs_total" -gt 0 ]]; then
               runs_array=$(printf '%s' "$runs_payload" | jq -c '.workflow_runs')
-            fi
-          fi
-
-          # Self-monitoring: the collector observes its own execution as
-          # in_progress/queued while it is running. Reporting that as the latest
-          # run would pin the dashboard to "Running" on every collection cycle,
-          # so prefer the most recent completed run for the collector's own
-          # workflow. Fall back to the raw list on the very first run, when no
-          # completed run exists yet.
-          if [[ "$repo" == "athmetry-system-status" && "$wf_path" == ".github/workflows/collect-status.yml" ]]; then
-            local completed_runs
-            completed_runs=$(printf '%s' "$runs_array" | jq -c '[.[] | select(.status == "completed")]')
-            if [[ "$(printf '%s' "$completed_runs" | jq 'length')" -gt 0 ]]; then
-              runs_array="$completed_runs"
             fi
           fi
 
@@ -1090,6 +1232,34 @@ collect_repo() {
                 started_at: .started_at,
                 completed_at: .completed_at
               }]')
+            fi
+
+            # Reconcile run-vs-jobs completion lag: GitHub can briefly return
+            # a non-terminal status on /runs even after all jobs completed.
+            if [[ "$status" == "in_progress" || "$status" == "queued" || "$status" == "waiting" || "$status" == "requested" || "$status" == "pending" ]] && \
+               printf '%s' "$jobs_array" | jq -e 'length > 0 and all(.[]; .status == "completed")' >/dev/null 2>&1; then
+              if [[ "$RUN_RECONCILE_DELAY_SECONDS" -gt 0 ]]; then
+                sleep "$RUN_RECONCILE_DELAY_SECONDS"
+              fi
+              local refreshed_run
+              if refreshed_run=$(gh_api "/repos/${owner}/${repo}/actions/runs/${run_id}" --jq '.' 2>/dev/null) && [[ -n "${refreshed_run:-}" ]]; then
+                local refreshed_status refreshed_conclusion refreshed_updated_at
+                refreshed_status=$(printf '%s' "$refreshed_run" | jq -r '.status // ""')
+                refreshed_conclusion=$(printf '%s' "$refreshed_run" | jq -r '.conclusion // ""')
+                refreshed_updated_at=$(printf '%s' "$refreshed_run" | jq -r '.updated_at // ""')
+                if [[ "$refreshed_status" == "completed" ]] && [[ -n "$refreshed_conclusion" ]] && [[ "$refreshed_conclusion" != "null" ]]; then
+                  status="$refreshed_status"
+                  conclusion="$refreshed_conclusion"
+                  if [[ -n "$refreshed_updated_at" ]] && [[ "$refreshed_updated_at" != "null" ]]; then
+                    completed_at="$refreshed_updated_at"
+                  fi
+                  runs_array=$(printf '%s' "$runs_array" | jq -c \
+                    --arg st "$status" \
+                    --arg conc "$conclusion" \
+                    --arg upd "$completed_at" \
+                    '(.[0].status = $st) | (.[0].conclusion = $conc) | (if $upd != "" then (.[0].updated_at = $upd) else . end)')
+                fi
+              fi
             fi
 
             # Fetch commit details for the head SHA
@@ -1161,22 +1331,7 @@ collect_repo() {
           # Determine effective status for this workflow
           local effective_status="unknown"
           if [[ "$wf_latest_status" != "unknown" ]] || [[ "$wf_latest_conclusion" != "unknown" ]]; then
-            if [[ "$wf_latest_status" == "completed" ]]; then
-              case "$wf_latest_conclusion" in
-                success) effective_status="success" ;;
-                failure|action_required) effective_status="failure" ;;
-                cancelled) effective_status="cancelled" ;;
-                timed_out) effective_status="failure" ;;
-                skipped) effective_status="skipped" ;;
-                *) effective_status="unknown" ;;
-              esac
-            elif [[ "$wf_latest_status" == "in_progress" ]]; then
-              effective_status="running"
-            elif [[ "$wf_latest_status" == "queued" ]]; then
-              effective_status="queued"
-            elif [[ "$wf_latest_status" == "failure" ]]; then
-              effective_status="failure"
-            fi
+            effective_status=$(derive_effective_status "$wf_latest_status" "$wf_latest_conclusion")
           fi
 
           # Build workflow entry
@@ -1228,33 +1383,8 @@ collect_repo() {
   fi
 
   # Determine overall repo status from workflows
-  local repo_overall_status="unknown"
-  if [[ "$workflows_json" != "[]" ]]; then
-    local has_failure=false has_running=false any_data=false
-    while IFS= read -r wf; do
-      local eff_status
-      eff_status=$(printf '%s' "$wf" | jq -r '.effectiveStatus')
-      if [[ "$eff_status" == "failure" ]]; then
-        has_failure=true
-        any_data=true
-      elif [[ "$eff_status" == "running" ]] || [[ "$eff_status" == "queued" ]]; then
-        has_running=true
-        any_data=true
-      elif [[ "$eff_status" == "success" ]]; then
-        any_data=true
-      fi
-    done <<< "$(printf '%s' "$workflows_json" | jq -c '.[]')"
-
-    if [[ "$any_data" == "true" ]]; then
-      if [[ "$has_failure" == "true" ]]; then
-        repo_overall_status="failure"
-      elif [[ "$has_running" == "true" ]]; then
-        repo_overall_status="running"
-      else
-        repo_overall_status="success"
-      fi
-    fi
-  fi
+  local repo_overall_status
+  repo_overall_status=$(compute_repo_overall_status "$repo_name" "$workflows_json")
 
   # Assemble the repo entry with workflows
   local repo_entry
@@ -1289,6 +1419,14 @@ main() {
   # Authenticate gh CLI for the duration of this run.
   export GH_TOKEN="$ATHMETRY_GITHUB_TOKEN"
   export GH_REPO="$REPO_OWNER/athmetry-system-status"
+
+  # When invoked by a completed commit workflow on main, wait briefly for peer
+  # push workflows on that commit SHA to settle before collecting.
+  if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_run" ]] && \
+     [[ "${TRIGGER_EVENT:-}" == "push" ]] && \
+     [[ -n "${TRIGGER_HEAD_SHA:-}" ]]; then
+    wait_for_commit_workflows "$TRIGGER_HEAD_SHA"
+  fi
 
   local entries="["
   local first=1
@@ -1358,6 +1496,7 @@ main() {
   fi
 
   # Build the full status document.
+  COLLECTED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   local new_content
   new_content=$(jq -n \
     --arg collectedAt "$COLLECTED_AT" \
@@ -1375,6 +1514,15 @@ main() {
   local tmp_file
   tmp_file=$(mktemp)
   printf '%s\n' "$new_content" > "$tmp_file"
+
+  if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_run" ]] && \
+     [[ "${TRIGGER_EVENT:-}" == "push" ]] && \
+     [[ -n "${TRIGGER_HEAD_SHA:-}" ]] && \
+     is_duplicate_commit_publish "$STATUS_FILE" "$tmp_file" "$TRIGGER_HEAD_SHA"; then
+    echo "Commit ${TRIGGER_HEAD_SHA} completed pipeline results already published in ${STATUS_FILE}; skipping duplicate update."
+    rm -f "$tmp_file"
+    exit 0
+  fi
 
   if [[ -f "$STATUS_FILE" ]] && cmp -s "$tmp_file" "$STATUS_FILE"; then
     echo "Status data unchanged; skipping commit."

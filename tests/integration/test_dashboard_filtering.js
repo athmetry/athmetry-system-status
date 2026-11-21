@@ -4,7 +4,19 @@
  * Tests the getDisplayWorkflows and calculateOverallStatus functions
  */
 
-import { getDisplayWorkflows, calculateOverallStatus } from '../../js/dashboard.js';
+import {
+  getDisplayWorkflows,
+  calculateOverallStatus,
+  resolveEffectiveStatus,
+  getStatusLabel,
+  getStatusClass,
+  escapeHtml
+} from '../../js/dashboard.js';
+import {
+  StatusApi,
+  deriveEffectiveStatus,
+  isHiddenInternalWorkflow
+} from '../../js/api.js';
 
 // Test data for system-status repo with deploy workflow
 const SYSTEM_STATUS_REPO_WITH_DEPLOY = {
@@ -334,6 +346,93 @@ const RUNNING_COLLECT_REPO = {
 const filteredRunning = getDisplayWorkflows(RUNNING_COLLECT_REPO);
 const runningOverall = calculateOverallStatus(filteredRunning);
 assertEqual(runningOverall, 'running', 'System-status with running collect (deploy filtered): shows running');
+
+// Test status resolution, labels, escaping, and API self-monitoring
+console.log('\n=== Testing Status Resolution, Labels, Escaping & API Self-Monitoring ===\n');
+
+// Completed latestRun overrides stale running effectiveStatus
+const STALE_RUNNING_COMPLETED_RUN = {
+  name: 'Collect System Status',
+  path: '.github/workflows/collect-status.yml',
+  effectiveStatus: 'running',
+  latestStatus: 'in_progress',
+  latestConclusion: 'unknown',
+  latestRun: {
+    status: 'completed',
+    conclusion: 'success',
+    runNumber: 65
+  }
+};
+assertEqual(
+  resolveEffectiveStatus(STALE_RUNNING_COMPLETED_RUN),
+  'success',
+  'Completed latestRun (success) overrides stale running effectiveStatus'
+);
+assertEqual(
+  calculateOverallStatus([STALE_RUNNING_COMPLETED_RUN]),
+  'success',
+  'calculateOverallStatus resolves completed latestRun as success instead of running'
+);
+
+// Raw GitHub statuses and conclusions map to proper labels and classes
+assertEqual(getStatusLabel('completed'), 'Completed', 'Raw status "completed" renders "Completed"');
+assertEqual(getStatusClass('completed'), 'success', 'Raw status "completed" uses success class');
+assertEqual(getStatusLabel('in_progress'), 'Running', 'Raw status "in_progress" renders "Running"');
+assertEqual(getStatusClass('in_progress'), 'running', 'Raw status "in_progress" uses running class');
+assertEqual(getStatusLabel('waiting'), 'Queued', 'Raw status "waiting" renders "Queued"');
+assertEqual(getStatusLabel('timed_out'), 'Timed Out', 'Raw conclusion "timed_out" renders "Timed Out"');
+assertEqual(getStatusClass('timed_out'), 'failure', 'Raw conclusion "timed_out" uses failure class');
+assertEqual(getStatusLabel('startup_failure'), 'Startup Failure', 'Raw conclusion "startup_failure" renders "Startup Failure"');
+assertEqual(getStatusLabel('neutral'), 'Neutral', 'Raw conclusion "neutral" renders "Neutral"');
+
+// HTML escaping
+assertEqual(
+  escapeHtml('<script src="x">&\'</script>'),
+  '&lt;script src=&quot;x&quot;&gt;&amp;&#039;&lt;/script&gt;',
+  'escapeHtml escapes &, <, >, ", and \''
+);
+
+// API deriveEffectiveStatus & isHiddenInternalWorkflow
+assertEqual(deriveEffectiveStatus('completed', 'neutral'), 'success', 'API deriveEffectiveStatus maps neutral to success');
+assertEqual(deriveEffectiveStatus('completed', 'startup_failure'), 'failure', 'API deriveEffectiveStatus maps startup_failure to failure');
+assertEqual(deriveEffectiveStatus('waiting', null), 'queued', 'API deriveEffectiveStatus maps waiting to queued');
+assert(isHiddenInternalWorkflow('athmetry-system-status', 'Deploy to GitHub Pages'), 'Deploy to GitHub Pages is hidden internal for system-status');
+assert(!isHiddenInternalWorkflow('athmetry-backend', 'Deploy to GitHub Pages'), 'Deploy to GitHub Pages is not hidden for backend');
+assert(isHiddenInternalWorkflow('athmetry-backend', 'Athmetry Backend Status Reporter'), 'Backend Status Reporter is hidden internal');
+
+// API processWorkflow self-monitoring requests status=completed and excludes in_progress from history
+const api = new StatusApi();
+const requestedUrls = [];
+api.fetchWithTimeout = async (url) => {
+  requestedUrls.push(url);
+  if (url.includes('/runs?')) {
+    return {
+      ok: true,
+      json: async () => ({
+        workflow_runs: [
+          { id: 100, run_number: 65, status: 'in_progress', conclusion: null, head_sha: 'abc12345', html_url: 'https://example.com/100', created_at: '2026-11-21T00:05:00Z', updated_at: '2026-11-21T00:05:01Z' },
+          { id: 99, run_number: 64, status: 'completed', conclusion: 'success', head_sha: 'def67890', html_url: 'https://example.com/99', created_at: '2026-11-21T00:00:00Z', updated_at: '2026-11-21T00:00:20Z' }
+        ]
+      })
+    };
+  }
+  return { ok: true, json: async () => ({ jobs: [], commit: { message: 'ok', author: { name: 'bot' } } }) };
+};
+
+const processedCollector = await api.processWorkflow('athmetry', 'athmetry-system-status', {
+  id: 302,
+  name: 'Collect System Status',
+  path: '.github/workflows/collect-status.yml',
+  state: 'active',
+  html_url: 'https://github.com/athmetry/athmetry-system-status/actions/workflows/collect-status.yml'
+});
+assert(
+  requestedUrls[0].includes('status=completed'),
+  'StatusApi.processWorkflow queries status=completed for collect-status.yml'
+);
+assertEqual(processedCollector.effectiveStatus, 'success', 'StatusApi.processWorkflow reports completed collector run as success');
+assertEqual(processedCollector.latestRun.runNumber, 64, 'StatusApi.processWorkflow selects completed run #64');
+assertEqual(processedCollector.history.length, 1, 'StatusApi.processWorkflow excludes in_progress run from collector history');
 
 console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`);
 

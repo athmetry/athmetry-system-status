@@ -1,131 +1,30 @@
-# Documentation Index
+# Athmetry System Status Documentation Hub
 
-Complete documentation for the Athmetry System Status repository.
+Load context progressively using this 3-tier hierarchy. Search first (`rg`), then read only the single document needed for your task.
 
----
+## Tier 1 — Session-Start Context (Read First)
 
-## Start Here
+- [`AGENTS.md`](../AGENTS.md) — Stack, workflow/collector/frontend invariants, mandatory validation gates, safety rules, and skill routing.
+- [`PROJECT_STATE.md`](../PROJECT_STATE.md) — Current `main` baseline, verified test/CI counts, implemented capabilities, and known limitations.
+- [`MEMORY.md`](../MEMORY.md) — File map, `workflow_run` / self-monitoring / API-lag / hidden-workflow gotchas, Zizmor policy, and verified commands.
 
-| Document | Purpose |
-|----------|---------|
-| [`AGENTS.md`](../AGENTS.md) | **Mandatory entry point** — every AI agent must read this first |
-| [`README.md`](../README.md) | Project overview, architecture, setup, troubleshooting |
-| [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Contribution guidelines, testing, PR process |
+## Tier 2 — On-Demand Technical References (Load Per Task)
 
----
+| Document | Owns | Read When |
+| --- | --- | --- |
+| [`../README.md`](../README.md) | Human-facing overview, live URL, quick start, repository structure | Onboarding or checking project overview |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Frontend module boundaries, 3-card layout, theme variables, responsive breakpoints, presentation filtering, key ADRs | Modifying HTML, CSS, theme tokens, layout, or `js/{app,api,dashboard}.js` |
+| [`DATA_FLOW.md`](DATA_FLOW.md) | Collector API pipeline, commit settlement, self-monitoring, Backend/Frontend event merging, `data/status.json` schema v2, status mapping, adding repos | Modifying `.github/scripts/collect-status.sh`, `data/status.json`, or `scripts/validate-status-json.js` |
+| [`CI_CD_AND_DEPLOYMENT.md`](CI_CD_AND_DEPLOYMENT.md) | All 4 GitHub Actions workflows, `.github/zizmor.yml` pinning policy, `ATHMETRY_GITHUB_TOKEN` PAT scopes, Pages quality gate, rollback procedures | Modifying `.github/workflows/*.yml`, `.github/zizmor.yml`, secrets, or deployment |
+| [`DEVELOPMENT_AND_TESTING.md`](DEVELOPMENT_AND_TESTING.md) | Local server, isolated collector testing, HTML/CSS/JS/Bash standards, integration & Playwright browser tests, manual regression checklist | Running tests, writing new specs, or checking coding conventions |
+| [`OPERATIONS.md`](OPERATIONS.md) | Freshness monitoring, symptom-based troubleshooting (frontend, collector, deploy), incident response runbooks, known limitations | Diagnosing stale/missing data, workflow failures, or production incidents |
 
-## Architecture
+## Tier 3 — Historical Archive (Audit Only)
 
-| Document | Description |
-|----------|-------------|
-| [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | High-level system architecture, data flow, tech stack, security model |
-| [`architecture/APPLICATION_ARCHITECTURE.md`](architecture/APPLICATION_ARCHITECTURE.md) | Frontend modules, theme system, responsive design, component details |
-| [`architecture/DATA_FLOW.md`](architecture/DATA_FLOW.md) | Collector APIs, JSON schema, normalization, frontend consumption, timing |
-| [`architecture/ARCHITECTURE_DECISIONS.md`](architecture/ARCHITECTURE_DECISIONS.md) | 20 Architecture Decision Records (ADRs) with rationale |
+- [`archive/README.md`](archive/README.md) — Archived 2026-11-20 end-to-end engineering audit and handover report ([`archive/ATHMETRY_SYSTEM_STATUS_CONTEXT.md`](archive/ATHMETRY_SYSTEM_STATUS_CONTEXT.md)). **Do not load during routine coding tasks.**
 
----
+## Maintenance Rules
 
-## Development
-
-| Document | Description |
-|----------|-------------|
-| [`development/LOCAL_SETUP.md`](development/LOCAL_SETUP.md) | Prerequisites, local server, collector testing, debugging tips |
-| [`development/CODING_STANDARDS.md`](development/CODING_STANDARDS.md) | JS/CSS/HTML/Bash conventions, naming, accessibility, commits |
-| [`development/TESTING_GUIDE.md`](development/TESTING_GUIDE.md) | Pre-release checklist, regression tests per change type |
-| [`development/DEBUGGING_GUIDE.md`](development/DEBUGGING_GUIDE.md) | Symptom-based troubleshooting, console commands, escalation |
-
----
-
-## Deployment
-
-| Document | Description |
-|----------|-------------|
-| [`deployment/DEPLOYMENT_GUIDE.md`](deployment/DEPLOYMENT_GUIDE.md) | Complete lifecycle: local → push → Actions → Pages → verification |
-| [`deployment/GITHUB_ACTIONS.md`](deployment/GITHUB_ACTIONS.md) | Workflow reference, triggers, permissions, secrets, debugging |
-| [`deployment/ENVIRONMENT_CONFIGURATION.md`](deployment/ENVIRONMENT_CONFIGURATION.md) | Secrets, variables, repository settings, custom domain |
-| [`deployment/ROLLOVER_GUIDE.md`](deployment/ROLLOVER_GUIDE.md) | Rollback procedures, decision tree, verification, communication |
-
----
-
-## Operations
-
-| Document | Description |
-|----------|-------------|
-| [`operations/MONITORING.md`](operations/MONITORING.md) | Metrics, dashboards, health checks, alerting recommendations |
-| [`operations/INCIDENT_RESPONSE.md`](operations/INCIDENT_RESPONSE.md) | Severity levels, response process, runbooks, postmortems |
-| [`operations/TROUBLESHOOTING.md`](operations/TROUBLESHOOTING.md) | Comprehensive symptom-based diagnosis for all components |
-| [`operations/KNOWN_LIMITATIONS.md`](operations/KNOWN_LIMITATIONS.md) | Documented boundaries, accepted trade-offs, future considerations |
-
----
-
-## Agent Context
-
-| Document | Description |
-|----------|-------------|
-| [`agent-context/PROJECT_CONTEXT.md`](agent-context/PROJECT_CONTEXT.md) | Mental map, critical files, gotchas, debugging shortcuts |
-| [`agent-context/AGENT_WORKFLOW.md`](agent-context/AGENT_WORKFLOW.md) | 8-step mandatory process with detailed checklists |
-| [`agent-context/CHANGE_IMPACT_MAP.md`](agent-context/CHANGE_IMPACT_MAP.md) | Change area → files, tests, docs cross-reference table |
-| [`agent-context/DOCUMENTATION_MAINTENANCE.md`](agent-context/DOCUMENTATION_MAINTENANCE.md) | Documentation principles, update triggers, validation |
-
----
-
-## Quick Navigation by Task
-
-| Task | Read These |
-|------|------------|
-| **New agent onboarding** | `AGENTS.md` → `PROJECT_CONTEXT.md` → `AGENT_WORKFLOW.md` |
-| **Fix theme/colors** | `APPLICATION_ARCHITECTURE.md` (theme section) → `css/style.css` |
-| **Fix responsive bug** | `APPLICATION_ARCHITECTURE.md` (responsive) → `css/style.css` (media queries) |
-| **Change refresh interval** | `APPLICATION_ARCHITECTURE.md` (auto-refresh) → `js/app.js` |
-| **Modify collector** | `DATA_FLOW.md` (collector) → `.github/scripts/collect-status.sh` |
-| **Change collector schedule** | `GITHUB_ACTIONS.md` → `.github/workflows/collect-status.yml` |
-| **Add monitored repo** | `DATA_FLOW.md` (extending) → `.github/scripts/collect-status.sh` + PAT |
-| **Fix deployment** | `DEPLOYMENT_GUIDE.md` → `GITHUB_ACTIONS.md` → workflow files |
-| **Rollback production** | `ROLLOVER_GUIDE.md` (decision tree) |
-| **Debug frontend issue** | `TROUBLESHOOTING.md` (frontend sections) → `DEBUGGING_GUIDE.md` |
-| **Debug collector issue** | `TROUBLESHOOTING.md` (collector sections) → workflow logs |
-| **Understand data schema** | `DATA_FLOW.md` (JSON schema reference) |
-| **Update documentation** | `DOCUMENTATION_MAINTENANCE.md` (update triggers, standards) |
-
----
-
-## File Reference
-
-### Root Files
-- `AGENTS.md` — Mandatory agent instructions
-- `README.md` — Project overview
-- `CONTRIBUTING.md` — Contribution guide
-- `CHANGELOG.md` — Version history
-- `index.html` — Application entry point
-- `css/style.css` — All styles
-- `js/api.js` — Data access layer
-- `js/app.js` — Bootstrap, lifecycle, UI
-- `js/dashboard.js` — DOM rendering
-- `data/status.json` — Generated status data
-- `scripts/validate-status-json.js` — Status data-contract validator
-- `package.json` — Dev tooling and release version source
-- `.gitignore` — Git ignore rules
-- `CNAME` — Custom domain (empty, reserved)
-
-### GitHub Workflows
-- `.github/workflows/collect-status.yml` — Collector (Backend event + 30-min fallback)
-- `.github/workflows/deploy-pages.yml` — Quality-gated Pages deployment
-- `.github/workflows/security-scan.yml` — gitleaks + zizmor security scanning
-- `.github/zizmor.yml` — Zizmor policy
-
-### Collector Script
-- `.github/scripts/collect-status.sh` — Bash + gh + jq collector
-
-### Assets
-- `assets/brand/` — Logo variants (light/dark pairs, favicon)
-
----
-
-## Documentation Maintenance
-
-- **Update with code**: Every implementation change updates relevant docs
-- **Single source of truth**: No duplicate content
-- **Factual tone**: Documents reality, not aspirations
-- **Validation**: Check file paths, commands, links before reporting done
-
-See [`agent-context/DOCUMENTATION_MAINTENANCE.md`](agent-context/DOCUMENTATION_MAINTENANCE.md) for full guidelines.
+- Update documents only with verified facts and command outputs; keep each fact in one owner document and link instead of duplicating.
+- Keep Tier 1 (`AGENTS.md`, `PROJECT_STATE.md`, `MEMORY.md`) concise; place detailed specs in the owning Tier 2 reference.
+- Verify all relative Markdown links resolve on disk before committing.
