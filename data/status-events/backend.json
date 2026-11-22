@@ -5,109 +5,113 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "fd462c5ee75ed2cbdcf5be4b31047c0871e9a537",
-      "message": "ci(deploy): deploy backend to Vercel after successful pipelines (#8)",
-      "author": "athmetry"
+      "sha": "73ec5c4a3ef51d10f1e886de49a6721b3960a68e",
+      "message": "fix(build): run prisma generate before nest build in pnpm build (#9)",
+      "author": "Md Tausif"
     },
     "workflow": {
       "name": "Athmetry Backend Validation",
       "path": ".github/workflows/ci.yml",
-      "runId": 44967692474,
-      "runNumber": 61,
+      "runId": 44971015947,
+      "runNumber": 63,
       "runAttempt": 1,
-      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967692474",
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44971015947",
       "status": "completed",
-      "conclusion": "success",
-      "effectiveStatus": "success",
+      "conclusion": "failure",
+      "effectiveStatus": "failure",
       "eventType": "push",
-      "triggeredAt": "2026-11-22T00:37:24Z",
-      "startedAt": "2026-11-22T00:37:24Z",
-      "completedAt": "2026-11-22T00:41:57Z",
+      "triggeredAt": "2026-11-22T01:18:46Z",
+      "startedAt": "2026-11-22T01:18:46Z",
+      "completedAt": "2026-11-22T01:22:30Z",
       "jobs": [
         {
           "name": "Athmetry Backend Validation / Lint, typecheck, test and build",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-22T00:37:26Z",
-          "completed_at": "2026-11-22T00:39:03Z"
-        },
-        {
-          "name": "Athmetry Security & Supply Chain / Secret scanning (Gitleaks)",
-          "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-22T00:37:26Z",
-          "completed_at": "2026-11-22T00:37:31Z"
+          "started_at": "2026-11-22T01:18:48Z",
+          "completed_at": "2026-11-22T01:20:28Z"
         },
         {
           "name": "Athmetry Security & Supply Chain / Workflow security analysis (zizmor)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-22T00:37:26Z",
-          "completed_at": "2026-11-22T00:37:31Z"
+          "started_at": "2026-11-22T01:18:48Z",
+          "completed_at": "2026-11-22T01:18:52Z"
         },
         {
           "name": "Athmetry Security & Supply Chain / Dependency audit (high and critical)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-22T00:37:26Z",
-          "completed_at": "2026-11-22T00:37:44Z"
+          "started_at": "2026-11-22T01:18:47Z",
+          "completed_at": "2026-11-22T01:19:04Z"
+        },
+        {
+          "name": "Athmetry Security & Supply Chain / Secret scanning (Gitleaks)",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-22T01:18:48Z",
+          "completed_at": "2026-11-22T01:18:53Z"
         },
         {
           "name": "Athmetry Database Validation / PostgreSQL migrations, integration tests and schema drift check",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-22T00:37:26Z",
-          "completed_at": "2026-11-22T00:39:31Z"
+          "started_at": "2026-11-22T01:18:47Z",
+          "completed_at": "2026-11-22T01:20:39Z"
         },
         {
           "name": "Athmetry Backend Production Deployment / Deploy verified main commit to Vercel Production",
           "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-22T00:41:43Z",
-          "completed_at": "2026-11-22T00:41:57Z"
+          "conclusion": "failure",
+          "started_at": "2026-11-22T01:22:25Z",
+          "completed_at": "2026-11-22T01:22:30Z"
         },
         {
-          "name": "Athmetry Backend Production Deployment / Vercel Production (READY: https://athmetry-backend-oihrg5o36-athmetry.vercel.app)",
+          "name": "Athmetry Backend Production Deployment / Vercel Production (ERROR: Error: Can't build deployment dpl_FKmFCricBvUpSf8NzFMn1PsqKcs4. The commit author doesn't have access to this team.)",
           "status": "completed",
-          "conclusion": "success",
-          "started_at": "2026-11-22T00:41:43Z",
-          "completed_at": "2026-11-22T00:41:57Z"
+          "conclusion": "failure",
+          "started_at": "2026-11-22T01:22:25Z",
+          "completed_at": "2026-11-22T01:22:30Z"
         }
       ]
     },
     "deployment": {
       "eligible": true,
       "required": true,
-      "status": "success",
-      "conclusion": "success",
-      "readyState": "READY",
+      "status": "failure",
+      "conclusion": "failure",
+      "readyState": "ERROR",
       "target": "production",
       "projectName": "athmetry-backend",
-      "url": "https://athmetry-backend-oihrg5o36-athmetry.vercel.app",
-      "deploymentId": "dpl_9r1SJhKZKkJNDD4qhzK8LMCdNb8z",
-      "commitSha": "fd462c5ee75ed2cbdcf5be4b31047c0871e9a537",
+      "url": null,
+      "deploymentId": null,
+      "commitSha": "73ec5c4a3ef51d10f1e886de49a6721b3960a68e",
       "workflowName": "Athmetry Backend Production Deployment",
       "workflowPath": ".github/workflows/vercel-production-deploy.yml",
-      "runId": 44967692474,
-      "runNumber": 8,
+      "runId": 44971015947,
+      "runNumber": 12,
       "runAttempt": 1,
-      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967692474",
-      "startedAt": "2026-11-22T00:41:43Z",
-      "completedAt": "2026-11-22T00:41:57Z",
-      "verifiedByVercel": true,
-      "error": null
+      "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44971015947",
+      "startedAt": "2026-11-22T01:22:25Z",
+      "completedAt": "2026-11-22T01:22:30Z",
+      "verifiedByVercel": false,
+      "error": {
+        "code": "vercel-deploy-cli-failed",
+        "stage": "vercel-deploy",
+        "message": "Error: Can't build deployment dpl_FKmFCricBvUpSf8NzFMn1PsqKcs4. The commit author doesn't have access to this team."
+      }
     },
     "pipeline": {
-      "revision": "Athmetry Backend Production Deployment:44967692474:1:success|Athmetry Backend Validation:44967518140:1|Athmetry Database Validation:44967518143:1|Athmetry Security & Supply Chain:44967518080:1|deployment:success:READY:https://athmetry-backend-oihrg5o36-athmetry.vercel.app",
-      "effectiveStatus": "success",
+      "revision": "Athmetry Backend Production Deployment:44971015947:1:failure|Athmetry Backend Validation:44970858094:1|Athmetry Database Validation:44970858044:1|Athmetry Security & Supply Chain:44970858023:1|deployment:failure:ERROR:none",
+      "effectiveStatus": "failure",
       "workflows": [
         {
           "name": "Athmetry Backend Validation",
           "path": ".github/workflows/ci.yml",
-          "runId": 44967518140,
-          "runNumber": 61,
+          "runId": 44970858094,
+          "runNumber": 63,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967518140",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44970858094",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -116,10 +120,10 @@
         {
           "name": "Athmetry Security & Supply Chain",
           "path": ".github/workflows/security.yml",
-          "runId": 44967518080,
-          "runNumber": 64,
+          "runId": 44970858023,
+          "runNumber": 67,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967518080",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44970858023",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -128,10 +132,10 @@
         {
           "name": "Athmetry Database Validation",
           "path": ".github/workflows/database-ci.yml",
-          "runId": 44967518143,
-          "runNumber": 40,
+          "runId": 44970858044,
+          "runNumber": 42,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967518143",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44970858044",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -140,30 +144,30 @@
         {
           "name": "Athmetry Backend Production Deployment",
           "path": ".github/workflows/vercel-production-deploy.yml",
-          "runId": 44967692474,
-          "runNumber": 8,
+          "runId": 44971015947,
+          "runNumber": 12,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44967692474",
+          "runUrl": "https://github.com/athmetry/athmetry-backend/actions/runs/44971015947",
           "status": "completed",
-          "conclusion": "success",
-          "effectiveStatus": "success",
+          "conclusion": "failure",
+          "effectiveStatus": "failure",
           "jobCount": 1
         }
       ]
     },
-    "effectiveStatus": "success",
-    "reportedAt": "2026-11-22T00:42:00Z",
+    "effectiveStatus": "failure",
+    "reportedAt": "2026-11-22T01:22:32Z",
     "source": "deployment_completion"
   },
   "meta": {
-    "reportedAt": "2026-11-22T00:42:00Z",
-    "sourceRunId": 44967692474,
+    "reportedAt": "2026-11-22T01:22:32Z",
+    "sourceRunId": 44971015947,
     "sourceRunAttempt": 1,
-    "ciRunId": 44967518140,
+    "ciRunId": 44970858094,
     "ciRunAttempt": 1,
-    "deploymentRunId": 44967692474,
+    "deploymentRunId": 44971015947,
     "deploymentRunAttempt": 1,
-    "pipelineRevision": "Athmetry Backend Production Deployment:44967692474:1:success|Athmetry Backend Validation:44967518140:1|Athmetry Database Validation:44967518143:1|Athmetry Security & Supply Chain:44967518080:1|deployment:success:READY:https://athmetry-backend-oihrg5o36-athmetry.vercel.app",
+    "pipelineRevision": "Athmetry Backend Production Deployment:44971015947:1:failure|Athmetry Backend Validation:44970858094:1|Athmetry Database Validation:44970858044:1|Athmetry Security & Supply Chain:44970858023:1|deployment:failure:ERROR:none",
     "version": 1
   }
 }
