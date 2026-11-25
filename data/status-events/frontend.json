@@ -5,45 +5,45 @@
     "product": "ATHMETRY-WEB",
     "branch": "main",
     "commit": {
-      "sha": "3570e677f8cfc63f2ab22382159b4b1ddd63dfaa",
-      "message": "feat(storefront): integrate official branding, saved addresses UI, and COD checkout (#12)",
+      "sha": "5cfab5dc3db85329ff31dc6e1d3f0d1480ca36c4",
+      "message": "feat(homepage,nav): redesign sports-tech homepage hero, header profile menu, and footer app section (#13)",
       "author": "athmetry"
     },
     "workflow": {
       "name": "Athmetry Frontend CI",
       "path": ".github/workflows/ci.yml",
-      "runId": 45662108972,
-      "runNumber": 44,
+      "runId": 45705673549,
+      "runNumber": 46,
       "runAttempt": 1,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45662108972",
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45705673549",
       "status": "completed",
       "conclusion": "success",
       "effectiveStatus": "success",
       "eventType": "push",
-      "triggeredAt": "2026-11-25T17:08:49Z",
-      "startedAt": "2026-11-25T17:08:49Z",
-      "completedAt": "2026-11-25T17:13:31Z",
+      "triggeredAt": "2026-11-25T21:32:17Z",
+      "startedAt": "2026-11-25T21:32:17Z",
+      "completedAt": "2026-11-25T21:36:48Z",
       "jobs": [
         {
           "name": "Athmetry Frontend CI / ci",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-25T17:08:51Z",
-          "completed_at": "2026-11-25T17:11:28Z"
+          "started_at": "2026-11-25T21:32:19Z",
+          "completed_at": "2026-11-25T21:34:57Z"
         },
         {
           "name": "Athmetry Frontend Production Deployment / Deploy verified main commit to Vercel Production",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-25T17:13:23Z",
-          "completed_at": "2026-11-25T17:13:31Z"
+          "started_at": "2026-11-25T21:36:40Z",
+          "completed_at": "2026-11-25T21:36:48Z"
         },
         {
-          "name": "Athmetry Frontend Production Deployment / Vercel Production (READY: https://athmetry-frontend-5cn1505v1-athmetry.vercel.app)",
+          "name": "Athmetry Frontend Production Deployment / Vercel Production (READY: https://athmetry-frontend-8r4b14393-athmetry.vercel.app)",
           "status": "completed",
           "conclusion": "success",
-          "started_at": "2026-11-25T17:13:23Z",
-          "completed_at": "2026-11-25T17:13:31Z"
+          "started_at": "2026-11-25T21:36:40Z",
+          "completed_at": "2026-11-25T21:36:48Z"
         }
       ]
     },
@@ -55,31 +55,31 @@
       "readyState": "READY",
       "target": "production",
       "projectName": "athmetry-frontend",
-      "url": "https://athmetry-frontend-5cn1505v1-athmetry.vercel.app",
-      "deploymentId": "dpl_GxKVTDbTpXuRgsjAMGHRznDS3UUF",
-      "commitSha": "3570e677f8cfc63f2ab22382159b4b1ddd63dfaa",
+      "url": "https://athmetry-frontend-8r4b14393-athmetry.vercel.app",
+      "deploymentId": "dpl_BWwsdJ2iVLc8ouQUhK8dmMGx41xG",
+      "commitSha": "5cfab5dc3db85329ff31dc6e1d3f0d1480ca36c4",
       "workflowName": "Athmetry Frontend Production Deployment",
       "workflowPath": ".github/workflows/vercel-production-deploy.yml",
-      "runId": 45662108972,
-      "runNumber": 14,
+      "runId": 45705673549,
+      "runNumber": 15,
       "runAttempt": 1,
-      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45662108972",
-      "startedAt": "2026-11-25T17:13:23Z",
-      "completedAt": "2026-11-25T17:13:31Z",
+      "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45705673549",
+      "startedAt": "2026-11-25T21:36:40Z",
+      "completedAt": "2026-11-25T21:36:48Z",
       "verifiedByVercel": true,
       "error": null
     },
     "pipeline": {
-      "revision": "Athmetry Frontend CI:45661597365:1|Athmetry Frontend Production Deployment:45662108972:1:success|deployment:success:READY:https://athmetry-frontend-5cn1505v1-athmetry.vercel.app",
+      "revision": "Athmetry Frontend CI:45705250521:1|Athmetry Frontend Production Deployment:45705673549:1:success|deployment:success:READY:https://athmetry-frontend-8r4b14393-athmetry.vercel.app",
       "effectiveStatus": "success",
       "workflows": [
         {
           "name": "Athmetry Frontend CI",
           "path": ".github/workflows/ci.yml",
-          "runId": 45661597365,
-          "runNumber": 44,
+          "runId": 45705250521,
+          "runNumber": 46,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45661597365",
+          "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45705250521",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -88,10 +88,10 @@
         {
           "name": "Athmetry Frontend Production Deployment",
           "path": ".github/workflows/vercel-production-deploy.yml",
-          "runId": 45662108972,
-          "runNumber": 14,
+          "runId": 45705673549,
+          "runNumber": 15,
           "runAttempt": 1,
-          "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45662108972",
+          "runUrl": "https://github.com/athmetry/athmetry-frontend/actions/runs/45705673549",
           "status": "completed",
           "conclusion": "success",
           "effectiveStatus": "success",
@@ -100,18 +100,18 @@
       ]
     },
     "effectiveStatus": "success",
-    "reportedAt": "2026-11-25T17:13:33Z",
+    "reportedAt": "2026-11-25T21:36:50Z",
     "source": "deployment_completion"
   },
   "meta": {
-    "reportedAt": "2026-11-25T17:13:33Z",
-    "sourceRunId": 45662108972,
+    "reportedAt": "2026-11-25T21:36:50Z",
+    "sourceRunId": 45705673549,
     "sourceRunAttempt": 1,
-    "ciRunId": 45661597365,
+    "ciRunId": 45705250521,
     "ciRunAttempt": 1,
-    "deploymentRunId": 45662108972,
+    "deploymentRunId": 45705673549,
     "deploymentRunAttempt": 1,
-    "pipelineRevision": "Athmetry Frontend CI:45661597365:1|Athmetry Frontend Production Deployment:45662108972:1:success|deployment:success:READY:https://athmetry-frontend-5cn1505v1-athmetry.vercel.app",
+    "pipelineRevision": "Athmetry Frontend CI:45705250521:1|Athmetry Frontend Production Deployment:45705673549:1:success|deployment:success:READY:https://athmetry-frontend-8r4b14393-athmetry.vercel.app",
     "version": 1
   }
 }
