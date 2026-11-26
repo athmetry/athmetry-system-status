@@ -1,6 +1,7 @@
 # Athmetry System Status — Working Memory
 
-**Updated:** 2026-11-21 | **Target:** Static engineering health portal (`athmetry-system-status`, HTML5/CSS3/Vanilla ES Modules, GitHub Actions, GitHub Pages)
+**Updated:** 2026-11-26 | **Target:** Static engineering health portal (`athmetry-system-status`, HTML5/CSS3/Vanilla ES Modules, GitHub Actions, GitHub Pages)  
+**Local `main`:** `d1d9888` | **Remote `origin/main`:** `1b512d2` (`0` open PRs; diverges only by automated `chore(status)` / `chore(status-event)` data commits)
 
 ## Architecture & File Map
 
@@ -18,6 +19,7 @@
 - **Self-monitoring & API-lag guards:** `collect-status.sh` and `js/api.js` query `status=completed&per_page=5` for `.github/workflows/collect-status.yml` and exclude `GITHUB_RUN_ID` (never falling back to `in_progress`). When `/runs` lags as `in_progress` while all `/jobs` are `completed`, `collect-status.sh` re-fetches `/actions/runs/{id}`. In `js/dashboard.js`, `resolveEffectiveStatus` reconciles completed `latestRun` conclusions so completed runs never display as `Running`.
 - **Hidden internal workflows:** `Athmetry Backend Status Reporter`, `Athmetry Frontend Status Reporter`, and (`athmetry-system-status`) `Deploy to GitHub Pages` stay in `data/status.json` `workflows[]` for auditability, are excluded from `repo.overallStatus` in `collect-status.sh` / `js/api.js`, and are filtered from display by `getDisplayWorkflows()` in `js/dashboard.js`.
 - **Zizmor & portability:** `.github/zizmor.yml` requires full-SHA pinning for `actions/checkout`, `actions/*`, and `*` (`@v4` allowed only for `actions/upload-pages-artifact` and `actions/deploy-pages`). `workflow_run` requires `# zizmor: ignore[dangerous-triggers]` on the `on:` line. Keep `collect-status.sh` compatible with macOS `/bin/bash` `3.2` (no `declare -A`, `mapfile`, or unguarded empty array expansion under `set -u`).
+- **Observed Pages artifact transient failure:** `Deploy to GitHub Pages` succeeded on `948d348` (`45706179034`, `2026-11-25T21:38:23Z`), while automated data commit `1b512d2` hit a transient `No artifacts named "github-pages" were found` failure in `Deploy static site to GitHub Pages` (`45748071339`), leaving the prior `948d348` Pages site live.
 
 ## Verified Commands & Handoff
 
